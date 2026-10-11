@@ -1,6 +1,8 @@
 (() => {
   'use strict';
   const status = document.getElementById('pwa-status');
+  const alert = document.getElementById('pwa-alert');
+  const detailStatus = document.getElementById('pwa-detail-status');
   const install = document.getElementById('pwa-install');
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const workerURL = new URL('./service-worker.js', document.baseURI);
@@ -8,16 +10,24 @@
   let checkSerial = 0;
 
   function show(kind, text) {
-    if (!status) return;
-    status.dataset.state = kind;
-    status.setAttribute('role', 'status');
-    status.setAttribute('aria-live', 'polite');
-    status.textContent = text;
+    if (status) {
+      status.dataset.state = kind;
+      status.setAttribute('role', 'status');
+      status.setAttribute('aria-live', 'polite');
+      status.textContent = text;
+    }
+    if (detailStatus) {
+      detailStatus.dataset.state = kind;
+      detailStatus.textContent = text;
+    }
+    // A verified cache needs no permanent banner. Its status remains available
+    // in the footer; setup problems and updates still get a visible notice.
+    if (alert) alert.hidden = kind === 'ready';
   }
 
   if (install) install.textContent = standalone
     ? 'Als Web-App geöffnet. Dein Lernfortschritt wird auf diesem Gerät gespeichert. iOS kann Website-Daten bei Speicherknappheit oder beim Löschen von Browserdaten entfernen.'
-    : 'Auf dem iPhone: Diesen Link in Safari öffnen → Teilen → „Zu Home-Bildschirm hinzufügen“ → gegebenenfalls „Als Web-App öffnen“ aktivieren → Hinzufügen. Die App einmal online starten und auf „Offline bereit“ warten. Lernfortschritt bleibt im jeweiligen Browser bzw. in der installierten App; er wird nicht geräteübergreifend synchronisiert.';
+    : 'Auf dem iPhone: Diesen Link in Safari öffnen → Teilen → „Zu Home-Bildschirm hinzufügen“ → gegebenenfalls „Als Web-App öffnen“ aktivieren → Hinzufügen. Die App einmal online starten und hier unter „App & Offline“ den Status „Offline bereit“ prüfen. Lernfortschritt bleibt im jeweiligen Browser bzw. in der installierten App; er wird nicht geräteübergreifend synchronisiert.';
 
   if (location.protocol === 'file:') {
     show('file', 'Lokale HTML-Datei: Die Lern-App funktioniert ohne Netzwerk. Für eine installierbare iPhone-Web-App öffne die HTTPS-Version in Safari.');
@@ -62,7 +72,7 @@
         return;
       }
       const update = registration?.waiting ? ' Ein Update ist bereit: Schließe alle Fenster dieser Lern-App und öffne sie erneut.' : '';
-      show('ready', 'Offline bereit · Fragen, Lösungen und Erklärungen sind auf diesem Gerät gespeichert.' + update);
+      show(update ? 'update' : 'ready', 'Offline bereit · Fragen, Lösungen und Erklärungen sind auf diesem Gerät gespeichert.' + update);
     } catch {
       if (serial === checkSerial) show('error', 'Offline-Status konnte nicht bestätigt werden. Öffne die Lern-App noch einmal online in Safari.');
     }

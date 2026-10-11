@@ -14,7 +14,11 @@ GitHub Pages ist bei der hier beschriebenen öffentlichen Veröffentlichung ohne
 
 ## Auf dem iPhone
 
-Öffne deine GitHub-Pages-Adresse in Safari → Teilen → Zu Home-Bildschirm hinzufügen → gegebenenfalls Als Web-App öffnen → Hinzufügen. Starte anschließend die installierte App einmal online. Erst wenn oben „Offline bereit“ steht, ist die Einrichtung abgeschlossen. Teste danach einen Neustart im Flugmodus.
+Öffne deine GitHub-Pages-Adresse in Safari → Teilen → Zu Home-Bildschirm hinzufügen → gegebenenfalls Als Web-App öffnen → Hinzufügen. Starte anschließend die installierte App einmal online. Öffne unten „App & Offline“: Wenn dort „Offline bereit“ steht, ist die Einrichtung abgeschlossen. Der bestätigte Status wird nur hier angezeigt; Hinweise zu Einrichtung, Problemen oder einem verfügbaren Update bleiben oben sichtbar. Teste danach einen Neustart im Flugmodus.
+
+## Darstellung
+
+Der Schalter neben „Fächer“ aktiviert den Darkmode. Ohne gespeicherte Auswahl folgt das Design der Geräteeinstellung. Eine manuelle Auswahl bleibt auf diesem Gerät gespeichert und ändert keine Antworten oder Lernrunden.
 
 ## Fortschritt und Updates
 
