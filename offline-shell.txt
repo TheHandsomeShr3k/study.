@@ -1558,10 +1558,16 @@ function collectionOptions(scopeId='all'){const names={original:'Originalaufgabe
 function collectionSelect(scopeId=courseScopes.get(activeCourse.id)||activeCourse.defaultScope||'all'){const items=collectionOptions(scopeId),remembered=courseCollections.get(activeCourse.id),preferred=remembered&&(remembered==='all'||items.some(item=>item.id===remembered))?remembered:items.some(item=>item.id===activeCourse.defaultCollection)?activeCourse.defaultCollection:items.some(item=>item.id==='original')?'original':'all';return items.map(item=>`<option value="${esc(item.id)}" ${item.id===preferred?'selected':''}>${esc(item.label)} · ${item.count} Fragen</option>`).join('')+`<option value="all" ${preferred==='all'?'selected':''}>Gesamter Fragenpool · ${scopedQuestions(scopeId).length} Fragen</option>`;}
 // Each answer is a distinct durable operation. A stale tab can replace the
 // compatibility snapshot, but cannot overwrite another tab's answer journal.
+// Compaction keeps that promise: whatever it merges from journals is written to
+// a new checkpoint key of its own first, and only keys read unchanged are removed.
 const storageReplica=typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
-const storageWorking=new Map();
-let storageClock=0;
+const storageWorking=new Map(),storagePending=new Map(),storageScans=new Map();
+// Answers older than this, outside rounds that can still record, become
+// per-question counters. Long-lived pages compact after this many answer keys.
+const STORAGE_FOLD_AGE=2*24*60*60*1000,STORAGE_COMPACT_AT=64;
+let storageClock=0,storageCompactBroken=false;
 function storageStamp(){storageClock=Math.max(Date.now(),storageClock+1);return String(storageClock).padStart(16,'0')+'-'+storageReplica;}
+function storageTime(stamp){const n=Number(String(stamp).slice(0,16));return Number.isSafeInteger(n)?n:0;}
 function storageObject(value){if(!value||typeof value!=='object'||Array.isArray(value))return false;const prototype=Object.getPrototypeOf(value);return prototype===null||Object.getPrototypeOf(prototype)===null;}
 function storageClone(value){return JSON.parse(JSON.stringify(value));}
 function storageKey(course){return course.storageKey||'boba-study-'+course.id+'-v1';}
@@ -1579,40 +1585,91 @@ function storageEventId(event){return event.roundId?event.roundId+'/'+event.qid:
 function storageMergeEvents(target,incoming){for(const[id,event]of Object.entries(incoming)){if(!target[id]||event.stamp<target[id].stamp)target[id]=event;}return target;}
 function storageProgress(value,course){const out={},questions=storageQuestions(course);if(!storageObject(value))return out;for(const [id,item]of Object.entries(value)){if(Object.hasOwn(questions,id)&&storageObject(item)&&Number.isSafeInteger(item.attempts)&&item.attempts>0&&Number.isSafeInteger(item.correct)&&item.correct>=0&&item.correct<=item.attempts&&typeof item.lastCorrect==='boolean')out[id]={attempts:item.attempts,correct:item.correct,lastCorrect:item.lastCorrect};}return out;}
 function storageEvents(value,course){const out={},questions=storageQuestions(course);if(!storageObject(value))return out;for(const [id,event]of Object.entries(value)){if(!storageObject(event)||!Object.hasOwn(questions,event.qid)||typeof event.ok!=='boolean'||!storageValidStamp(event.stamp)||event.stamp==='0'||storageEventId(event)!==id)continue;if(event.roundId!==undefined){const q=questions[event.qid];if(typeof event.roundId!=='string'||!event.roundId||event.roundId.length>256||event.answer!==null&&(!Number.isInteger(event.answer)||event.answer<0||event.answer>=q.options.length)||event.ok!==(event.answer===q.correct))continue;}out[id]=storageClone(event);}return out;}
+function storageJournal(value,course){return storageEvents(value.events||{[value.event?storageEventId(value.event):'']:value.event},course);}
+function storageMax(target,progress){for(const[id,item]of Object.entries(progress)){if(!target[id]||item.attempts>target[id].attempts)target[id]=item;}return target;}
+// A fold counts every answer up to `through` (ms); those answers leave the journal.
+function storageFold(value,course){return storageObject(value)&&Number.isSafeInteger(value.through)&&value.through>0?{through:value.through,progress:storageProgress(value.progress,course)}:null;}
 
 function storageState(value,course){
  if(!storageObject(value)||value.version!==storageVersion(course))return null;
  const sync=storageObject(value.sync)&&value.sync.schema===1?value.sync:null;
- const epoch=sync&&storageValidStamp(sync.epoch)?sync.epoch:'0';
- return {version:storageVersion(course),progress:storageProgress(value.progress,course),session:storageSession(value.session,course),sync:{schema:1,epoch,baseProgress:storageProgress(sync?sync.baseProgress:value.progress,course),events:storageEvents(sync?.events,course),sessionStamp:storageValidStamp(sync?.sessionStamp)?sync.sessionStamp:'0'}};
+ const epoch=sync&&storageValidStamp(sync.epoch)?sync.epoch:'0',fold=storageFold(sync?.fold,course);
+ return {version:storageVersion(course),progress:storageProgress(value.progress,course),session:storageSession(value.session,course),sync:{schema:1,epoch,baseProgress:storageProgress(sync?sync.baseProgress:value.progress,course),events:storageEvents(sync?.events,course),sessionStamp:storageValidStamp(sync?.sessionStamp)?sync.sessionStamp:'0',...(fold?{fold}:{})}};
 }
 function storageGet(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}}
 function storageWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{return false;}}
 function storageNotice(){toast('Dauerhaftes Speichern ist hier nicht möglich. Dein Fortschritt bleibt für diese geöffnete Seite erhalten.');}
 function storageDerive(base,events){const result=storageClone(base);for(const event of Object.values(events).sort((a,b)=>a.stamp.localeCompare(b.stamp))){const old=result[event.qid]||{attempts:0,correct:0};result[event.qid]={attempts:old.attempts+1,correct:old.correct+(event.ok?1:0),lastCorrect:event.ok};}return result;}
 function storageRead(course){
- const key=storageKey(course),states=[storageState(storageGet(key),course),storageState(courseStates.get(course.id),course),storageState(storageWorking.get(course.id)?.state,course)].filter(Boolean);
- const resets=[],operations=[],sessions=[];
+ const key=storageKey(course),states=[...new Set([storageGet(key),courseStates.get(course.id),storageWorking.get(course.id)?.state])].map(value=>storageState(value,course)).filter(Boolean);
+ const resets=[],operations=[],sessions=[],checkpoints=[],scan=[];
  // Enumerating distinct keys avoids the read/modify/write race of a shared log.
- try{for(let i=0;i<localStorage.length;i++){const name=localStorage.key(i);if(!name?.startsWith(key+'::'))continue;const value=storageGet(name);if(!storageObject(value)||value.version!==storageVersion(course)||!storageValidStamp(value.epoch))continue;if(name.startsWith(key+'::reset::'))resets.push(value.epoch);else if(name.startsWith(key+'::answer::'))operations.push(value);else if(name.startsWith(key+'::session::'))sessions.push(value);}}catch{}
- const epoch=[...states.map(s=>s.sync.epoch),...resets,...operations.map(s=>s.epoch),...sessions.map(s=>s.epoch),'0'].sort().at(-1),base={},events={};
+ try{for(let i=0;i<localStorage.length;i++){const name=localStorage.key(i),kind=name?.startsWith(key+'::')&&['reset','answer','session','checkpoint'].find(type=>name.startsWith(key+'::'+type+'::'));if(!kind)continue;const text=localStorage.getItem(name);if(text===null)continue;let value=null;try{value=JSON.parse(text);}catch{}if(!storageObject(value)||value.version!==storageVersion(course)||!storageValidStamp(value.epoch))value=null;scan.push({name,text,kind,value});if(!value)continue;if(kind==='reset')resets.push(value.epoch);else if(kind==='answer')operations.push(value);else if(kind==='session')sessions.push(value);else checkpoints.push(value);}}catch{}
+ const epoch=[...states.map(s=>s.sync.epoch),...resets,...operations.map(s=>s.epoch),...sessions.map(s=>s.epoch),...checkpoints.map(s=>s.epoch),'0'].sort().at(-1),events={};
+ storageScans.set(course.id,{epoch,scan});
+ const current=states.filter(s=>s.sync.epoch===epoch),saved=checkpoints.filter(c=>c.epoch===epoch);
+ // The newest fold is the base; older folds and the legacy base are contained in it.
+ const bases=[...current.map(s=>s.sync.fold||{through:0,progress:s.sync.baseProgress}),...saved.map(c=>({through:Number.isSafeInteger(c.through)&&c.through>0?c.through:0,progress:storageProgress(c.progress,course)}))];
+ const through=Math.max(0,...bases.map(b=>b.through)),base={};
+ for(const item of bases)if(item.through===through)storageMax(base,item.progress);
  let bestSession=null,bestStamp='0';
- for(const state of states.filter(s=>s.sync.epoch===epoch)){
-  for(const[id,item]of Object.entries(state.sync.baseProgress)){if(!base[id]||item.attempts>base[id].attempts)base[id]=item;}
+ for(const state of current){
   storageMergeEvents(events,state.sync.events);
   if(state.sync.sessionStamp>=bestStamp){bestStamp=state.sync.sessionStamp;bestSession=state.session;}
  }
- for(const item of operations){if(item.epoch===epoch)storageMergeEvents(events,storageEvents(item.events||{[item.event?storageEventId(item.event):'']:item.event},course));}
+ for(const item of operations){if(item.epoch===epoch)storageMergeEvents(events,storageJournal(item,course));}
+ for(const item of saved)storageMergeEvents(events,storageEvents(item.events,course));
  for(const item of sessions){if(item.epoch===epoch)storageMergeEvents(events,storageEvents(item.events,course));if(item.epoch===epoch&&storageValidStamp(item.stamp)&&item.stamp>bestStamp&&(item.session===null||validSession(item.session,course))){bestStamp=item.stamp;bestSession=storageSession(item.session,course);}}
+ // Merge first, then drop folded ids, so a later duplicate of a folded answer is not counted again.
+ for(const[id,event]of Object.entries(events))if(storageTime(event.stamp)<=through)delete events[id];
  // Advance the local logical clock beyond observed timestamps, including clocks
  // in other tabs that may have run while this one was suspended.
  for(const stamp of [epoch,bestStamp,...Object.values(events).map(event=>event.stamp)]){const n=Number(stamp.split('-')[0]);if(Number.isSafeInteger(n))storageClock=Math.max(storageClock,n);}
- return {version:storageVersion(course),progress:storageDerive(base,events),session:bestSession,sync:{schema:1,epoch,baseProgress:base,events,sessionStamp:bestStamp}};
+ storageClock=Math.max(storageClock,through);
+ const legacy=through?current.reduce((out,state)=>storageMax(out,state.sync.baseProgress),{}):base;
+ return {version:storageVersion(course),progress:storageDerive(base,events),session:bestSession,sync:{schema:1,epoch,baseProgress:legacy,events,sessionStamp:bestStamp,...(through?{fold:{through,progress:base}}:{})}};
 }
+// Removes merged journals. `shared` must come from the storageRead() of this course
+// just before; the caller persists the returned state as the compatibility snapshot.
+function storageCompact(course,shared,ownSession=null){
+ const key=storageKey(course),info=storageScans.get(course.id),sync=shared.sync,own=key+'::session::'+storageReplica;
+ if(storageCompactBroken||!info||info.epoch!==sync.epoch)return {state:shared,changed:false};
+ const drop=entry=>{try{if(localStorage.getItem(entry.name)===entry.text)localStorage.removeItem(entry.name);}catch{storageCompactBroken=true;}};
+ // Older generations, other bank versions and unreadable journals never count again.
+ for(const entry of info.scan)if(entry.value?.epoch!==sync.epoch)drop(entry);
+ const current=info.scan.filter(entry=>entry.value?.epoch===sync.epoch);
+ const answers=current.filter(entry=>entry.kind==='answer'),saved=current.filter(entry=>entry.kind==='checkpoint');
+ const superseded=current.filter(entry=>entry.kind==='session'&&entry.name!==own&&entry.value.stamp!==sync.sessionStamp);
+ // Superseded rounds can go at once when every answer they carry is in a journal that stays.
+ const covered={};let foldedThrough=0;
+ for(const entry of current){if(superseded.includes(entry))continue;if(entry.kind==='checkpoint'&&Number.isSafeInteger(entry.value.through))foldedThrough=Math.max(foldedThrough,entry.value.through);storageMergeEvents(covered,entry.kind==='answer'?storageJournal(entry.value,course):storageEvents(entry.value.events,course));}
+ const uncovered=superseded.filter(entry=>!Object.values(storageEvents(entry.value.events,course)).every(event=>storageTime(event.stamp)<=foldedThrough||covered[storageEventId(event)]?.stamp<=event.stamp));
+ for(const entry of superseded)if(!uncovered.includes(entry))drop(entry);
+ // Rounds that can still record keep their answers for deduplication and reconciliation.
+ const live=new Set([shared.session?.roundId,ownSession?.roundId].filter(Boolean));
+ let cut=Date.now()-STORAGE_FOLD_AGE;
+ for(const id of live)if(storageTime(id))cut=Math.min(cut,storageTime(id)-1);
+ for(const event of Object.values(sync.events))if(live.has(event.roundId))cut=Math.min(cut,storageTime(event.stamp)-1);
+ const through=sync.fold?.through||0,folded=Object.values(sync.events).filter(event=>storageTime(event.stamp)<=cut),advance=cut>through&&folded.length>0;
+ if(!advance&&!answers.length&&!uncovered.length&&saved.length<2)return {state:shared,changed:false};
+ const fold=advance?cut:through,base=storageDerive(sync.fold?.progress||sync.baseProgress,advance?folded:[]);
+ const events=advance?Object.fromEntries(Object.entries(sync.events).filter(([,event])=>storageTime(event.stamp)>cut)):sync.events,stamp=storageStamp();
+ if(!storageWrite(key+'::checkpoint::'+stamp,{version:storageVersion(course),epoch:sync.epoch,stamp,through:fold,progress:base,events}))return {state:shared,changed:false};
+ // The checkpoint holds this tab's unjournaled answers as well.
+ storagePending.delete(course.id);
+ for(const entry of [...answers,...saved,...uncovered])drop(entry);
+ return {state:{...shared,progress:storageDerive(base,events),sync:{...sync,events,...(fold?{fold:{through:fold,progress:base}}:{})}},changed:true};
+}
+// Launch-time cleanup also covers subjects that are not opened in this session.
+function storageCompactAll(){for(const course of COURSES){const {state,changed}=storageCompact(course,storageRead(course));if(changed)storageWrite(storageKey(course),state);}}
+function storagePendingEvents(course,epoch){const pending=storagePending.get(course.id);return pending&&pending.epoch===epoch?pending.events:{};}
 function storageRemember(course,state){const copy=storageClone(state);courseStates.set(course.id,copy);storageWorking.set(course.id,{state:copy,sessionText:JSON.stringify(copy.session)});}
 function storageReconcileSession(state){let changed=false;const current=state.session;if(current?.roundId){for(const id of current.ids){const event=state.sync.events[current.roundId+'/'+id];if(!event)continue;const answer=event.answer===null?undefined:event.answer;if(current.answers[id]!==answer||!current.recorded[id])changed=true;if(answer===undefined)delete current.answers[id];else current.answers[id]=answer;current.submitted[id]=true;current.recorded[id]=true;}}return changed;}
 function load(){
- const shared=storageRead(activeCourse),local=storageState(courseStates.get(activeCourse.id),activeCourse);
+ const local=storageState(courseStates.get(activeCourse.id),activeCourse);
+ const {state:shared,changed}=storageCompact(activeCourse,storageRead(activeCourse),local?.session);
+ // The rewritten snapshot keeps the newest shared round, exactly as save() does.
+ if(changed)storageWrite(storageKey(activeCourse),shared);
  if(local&&local.sync.epoch===shared.sync.epoch){shared.session=local.session;shared.sync.sessionStamp=local.sync.sessionStamp;}
  storageReconcileSession(shared);storageRemember(activeCourse,shared);return {progress:shared.progress,session:shared.session};
 }
@@ -1629,12 +1686,14 @@ function storageRefresh(){
 }
 function save(){
  if(!activeCourse)return;
- const {shared,reset}=storageRefresh(),working=storageWorking.get(activeCourse.id);
+ let {shared,reset}=storageRefresh();const working=storageWorking.get(activeCourse.id);
+ if(!reset&&storageScans.get(activeCourse.id).scan.filter(entry=>entry.kind==='answer').length>=STORAGE_COMPACT_AT){shared=storageCompact(activeCourse,shared,session).state;progress=shared.progress;}
  let stamp=working?.state.sync.sessionStamp||'0';
  const text=JSON.stringify(session);
  const changed=!reset&&text!==(working?.sessionText??'null');
  let durable=true;
- if(changed){stamp=storageStamp();durable=storageWrite(storageKey(activeCourse)+'::session::'+storageReplica,{version:VERSION,epoch:shared.sync.epoch,stamp,session,events:shared.sync.events});}
+ // The session key carries only this tab's answers that no journal holds yet.
+ if(changed){stamp=storageStamp();durable=storageWrite(storageKey(activeCourse)+'::session::'+storageReplica,{version:VERSION,epoch:shared.sync.epoch,stamp,session,events:storagePendingEvents(activeCourse,shared.sync.epoch)});}
  const local={...shared,session:storageClone(session),sync:{...shared.sync,sessionStamp:stamp}};
  // Persist the newest shared round, while keeping this window's own round in
  // memory. Merely opening the overview must not publish an older round again.
@@ -1649,11 +1708,14 @@ function recordMany(ids,knownShared=null){
  const added={};
  for(const id of ids){if(session.recorded[id])continue;const q=byId[id];if(!q)continue;const stamp=storageStamp(),event={qid:id,ok:session.answers[id]===q.correct,stamp,roundId:session.roundId,answer:session.answers[id]??null};added[storageEventId(event)]=event;shared.sync.events[storageEventId(event)]=event;session.recorded[id]=true;}
  if(!Object.keys(added).length)return;
- shared.progress=storageDerive(shared.sync.baseProgress,shared.sync.events);progress=shared.progress;
- const working=storageWorking.get(activeCourse.id);working.state.sync.events=shared.sync.events;working.state.progress=shared.progress;
+ shared.progress=storageDerive(shared.sync.fold?.progress||shared.sync.baseProgress,shared.sync.events);progress=shared.progress;
+ const working=storageWorking.get(activeCourse.id);Object.assign(working.state.sync,{events:shared.sync.events,fold:shared.sync.fold});working.state.progress=shared.progress;
  // A complete test round writes one durable batch, avoiding one storage event
- // and full history scan per question on other open devices/windows.
- if(!storageWrite(STORAGE+'::answer::'+storageStamp(),{version:VERSION,epoch:shared.sync.epoch,events:added}))storageNotice();
+ // and full history scan per question on other open devices/windows. Answers
+ // whose earlier batch failed are retried with it.
+ const events={...storagePendingEvents(activeCourse,shared.sync.epoch),...added};
+ if(storageWrite(STORAGE+'::answer::'+storageStamp(),{version:VERSION,epoch:shared.sync.epoch,events}))storagePending.delete(activeCourse.id);
+ else{storagePending.set(activeCourse.id,{epoch:shared.sync.epoch,events});storageNotice();}
 }
 function record(id){recordMany([id]);}
 
@@ -1661,17 +1723,22 @@ function resetCourseProgress(){
  storageRead(activeCourse);
  try{localStorage.removeItem(STORAGE+'::review');}catch{}
  if(typeof review!=='undefined')review=null;
- const epoch=storageStamp();progress={};session=null;
+ const epoch=storageStamp();progress={};session=null;storagePending.delete(activeCourse.id);
  const state={version:VERSION,progress:{},session:null,sync:{schema:1,epoch,baseProgress:{},events:{},sessionStamp:epoch}};
  storageRemember(activeCourse,state);
  const resetSaved=storageWrite(STORAGE+'::reset::'+epoch,{version:VERSION,epoch});
  const sessionSaved=storageWrite(STORAGE+'::session::'+storageReplica,{version:VERSION,epoch,stamp:epoch,session:null});
- if(!storageWrite(STORAGE,state)||!resetSaved||!sessionSaved)storageNotice();
+ const snapshotSaved=storageWrite(STORAGE,state);
+ // Once the new generation is stored anywhere, earlier generations never count again.
+ if(resetSaved||sessionSaved||snapshotSaved)for(const entry of storageScans.get(activeCourse.id)?.scan||[]){try{const value=JSON.parse(localStorage.getItem(entry.name)||'null');if(!storageObject(value)||!storageValidStamp(value.epoch)||value.epoch<epoch)localStorage.removeItem(entry.name);}catch{}}
+ if(!snapshotSaved||!resetSaved||!sessionSaved)storageNotice();
 }
 function storageCourseProgress(course){return Object.entries(storageRead(course).progress).filter(([id,item])=>!id.startsWith('puzzle:')&&item.attempts>0).length;}
 if(typeof window.addEventListener==='function')window.addEventListener('storage',event=>{
  if(!activeCourse||event.key!==STORAGE&&!event.key?.startsWith(STORAGE+'::'))return;
  if(event.key===STORAGE+'::review'&&event.newValue===null&&typeof review!=='undefined'){review=null;if(view==='review')go('home');}
+ // A removed journal was merged into a checkpoint first; there is nothing new to read.
+ if(event.newValue===null&&event.key!==STORAGE&&event.key!==STORAGE+'::review')return;
  const {shared,reset,reconciled}=storageRefresh();
  if(reset&&typeof review!=='undefined')review=null;
  if(reset&&['quiz','results','review'].includes(view))go('home');
@@ -1679,7 +1746,7 @@ if(typeof window.addEventListener==='function')window.addEventListener('storage'
  else if(reconciled&&view==='results')results();
  else if(view==='courses')courseHub();
  // Keep merged progress available when storage is temporarily unavailable later.
- const working=storageWorking.get(activeCourse.id);if(working){working.state.progress=shared.progress;working.state.sync.events=shared.sync.events;}
+ const working=storageWorking.get(activeCourse.id);if(working){working.state.progress=shared.progress;Object.assign(working.state.sync,{events:shared.sync.events,fold:shared.sync.fold});}
 });
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -1786,6 +1853,7 @@ function sources(){if(activeCourse.id==='controlling')return controllingSources(
 document.querySelectorAll('[data-view]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.view)));
 document.getElementById('reset-progress').addEventListener('click',async()=>{const course=activeCourse,epoch=course&&storageRead(course).sync.epoch;if(course&&await ask('Alle gespeicherten Antworten und die laufende Runde für '+course.title+' auf diesem Gerät löschen?')){if(activeCourse!==course||storageRead(course).sync.epoch!==epoch)return;resetCourseProgress();go('home');toast('Fortschritt gelöscht.');}});
 
+storageCompactAll();
 if(!hasSeenIntro())view='intro';
 render();
 </script>
