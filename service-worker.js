@@ -1,8 +1,8 @@
 'use strict';
 
 // prepare-dist.mjs replaces these constants with a digest of the delivered app.
-const VERSION = 'd014ffb5cdcb568a08f5';
-const INTEGRITY = {"index.html":"f2cec6a1a37f7c688c78638838d9195cfc1a6b532a7d6d9ac0f89b8b0b8b0177","pwa-client.js":"3d91f9090fd6e69b4913cde797f31e2ac26623cd5590e4115e8e2a45ea60be95","manifest.webmanifest":"e52e0a281ac587e99b9d27d7665780781360475ebb22969d8322ec1455433585","icon-192.png":"ed7448f777bd07b2bcc78f6c9f5fe515f1f00314e85e3d15ebd78cd8e4780937","icon-512.png":"ed7448f777bd07b2bcc78f6c9f5fe515f1f00314e85e3d15ebd78cd8e4780937","apple-touch-icon.png":"ed7448f777bd07b2bcc78f6c9f5fe515f1f00314e85e3d15ebd78cd8e4780937"};
+const VERSION = 'c170b32621b779714fd0';
+const INTEGRITY = {"index.html":"6bb2554f5fa5fe1d78f9996ea05397e73f9cecb3c6dca3645de9f22454f3df62","pwa-client.js":"3d91f9090fd6e69b4913cde797f31e2ac26623cd5590e4115e8e2a45ea60be95","manifest.webmanifest":"e52e0a281ac587e99b9d27d7665780781360475ebb22969d8322ec1455433585","icon-192.png":"ed7448f777bd07b2bcc78f6c9f5fe515f1f00314e85e3d15ebd78cd8e4780937","icon-512.png":"ed7448f777bd07b2bcc78f6c9f5fe515f1f00314e85e3d15ebd78cd8e4780937","apple-touch-icon.png":"ed7448f777bd07b2bcc78f6c9f5fe515f1f00314e85e3d15ebd78cd8e4780937"};
 const BASE = new URL('./', self.registration.scope);
 const CACHE_PREFIX = 'controlling-trainer-offline-' + encodeURIComponent(BASE.pathname) + '-';
 const CACHE_NAME = CACHE_PREFIX + VERSION;
