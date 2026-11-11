@@ -636,6 +636,27 @@ details.translation p,.feedback-more>p,.puzzle-item+p{white-space:pre-line}
 /* Recall cards in the card deck: one button uncovers the solution, the deck's four rating buttons follow */
 .recall-review [data-recall-reveal]{margin:4px 0 0}
 .review-layout .qcard:has(.recall-review) > .actions{display:none}
+/* Rating tiles with faces: the four levels after a card (card deck "Wiederholen" and recall cards in a round) */
+.qcard .review-ratings,.qcard .rate-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:760px){.qcard .review-ratings,.qcard .rate-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.qcard button.rate-tile.rate-tile{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:8px;min-width:0;min-height:62px;margin:0;padding:10px 8px;border:2px solid var(--tile-line);border-radius:16px;background:var(--tile-bg);color:var(--ink);box-shadow:0 2px 0 var(--tile-line);font:inherit;text-align:left;cursor:pointer}
+.qcard button.rate-tile.rate-tile:hover:not(:disabled){background:var(--tile-bg);color:var(--ink);border-color:var(--tile-ink);box-shadow:0 2px 0 var(--tile-ink)}
+.qcard button.rate-tile.rate-tile:active{transform:translateY(2px);box-shadow:none}
+.rate-tile:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.rate-tile[data-rate="again"]{--tile-bg:var(--pink);--tile-line:var(--pink-border);--tile-ink:var(--error-text)}
+.rate-tile[data-rate="hard"]{--tile-bg:var(--peach);--tile-line:var(--peach-border);--tile-ink:var(--warm-text)}
+.rate-tile[data-rate="good"]{--tile-bg:var(--mint);--tile-line:var(--mint-border);--tile-ink:var(--success-text)}
+.rate-tile[data-rate="easy"]{--tile-bg:var(--lavender-soft);--tile-line:var(--lavender-border);--tile-ink:var(--purple-text)}
+.rate-face{flex:0 0 auto;width:26px;height:26px;color:var(--tile-ink)}
+.rate-text{display:grid;min-width:0;line-height:1.25}
+.rate-name{font-size:14px;font-weight:800;overflow-wrap:anywhere}
+.rate-tile .rate-text small{font-size:13px;font-weight:600;color:var(--muted);opacity:1}
+@media (max-width:384px){.rate-face{width:24px;height:24px}.rate-name{font-size:13px}}
+/* Recall card in a round: the tiles appear once the solution is open, and they replace "Antwort prüfen" */
+.calc-part.recall-rate{margin:4px 0 0;padding:0;border:0;background:none}
+.recall-rate .calc-label{font-size:15px;font-weight:700}
+.recall-board details.recall-solution:not([open])~.recall-rate{display:none}
+.qcard:has(.recall-rate) #check{display:none}
 
 @media screen {
 .course-card[data-tone="lime"]{background:#e9efc6}
@@ -1646,6 +1667,14 @@ function calcSet(el,part,value){
  if(!el.matches('.calc-options')){el.value=value;return;}
  el.querySelectorAll('input').forEach(input=>{input.checked=String(part.options[Number(input.value)])===String(value);});
 }
+// Rating tiles: the four levels after a card, each a tile with a small face (card deck "Wiederholen" and recall cards
+// in a round). rateFace draws the face for a level; the colours per level are in international-finance.css (.rate-tile).
+const RATE_LEVELS=['again','hard','good','easy'];
+const RATE_MOUTHS={again:'<path d="M9 16.1c.8-1 1.8-1.5 3-1.5s2.2.5 3 1.5"/>',hard:'<path d="M9 15.9l6-1.4"/>',good:'<path d="M9 14.4c.8 1 1.8 1.5 3 1.5s2.2-.5 3-1.5"/>',easy:'<path d="M8.3 13.5h7.4a3.7 3.7 0 0 1-7.4 0z"/>'};
+function rateFace(rating){return `<svg class="rate-face" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-width="2.3" d="M9 9.8h.01M15 9.8h.01"/>${RATE_MOUTHS[rating]||RATE_MOUTHS.good}</svg>`;}
+// After a rating in a round the next card appears at once; the second tap of a double tap must not hit that new card.
+let recallQuiet=0;
+document.addEventListener('click',event=>{if(event.isTrusted&&Date.now()<recallQuiet&&event.target.closest?.('.qcard')){event.preventDefault();event.stopPropagation();}},true);
 // Puzzle type "recall": an open exam question as a self-check card. The student answers for themselves, uncovers
 // the short solution (points / pointsDe) and says whether they knew it; that self-rating is the one "part".
 function recallSolution(puzzle,open){
@@ -1667,7 +1696,12 @@ function calcBoard(puzzle,solution){
    const marked=!!solution.marks,ok=marked&&solution.marks[i];
    return `<div class="calc-part${marked?(ok?' ok':' bad'):''}"><span class="calc-label">${esc(part.label)}</span><span class="calc-right"><b>${esc(calcShow(part))}</b>${marked?`<span class="calc-mark" aria-hidden="true">${ok?'✓':'×'}</span>`:''}</span>${marked&&!ok?`<span class="calc-yours" lang="de">Deins: <span lang="en">${esc(solution.placed?.[i]||'leer')}</span></span>`:''}</div>`;
   }
-  if(calcLong(part)||recall)return `<div class="calc-part"><span class="calc-label">${esc(part.label)}</span><span class="calc-options" role="radiogroup" aria-label="${esc(part.label)}" data-calc-input="${i}">${part.options.map((option,k)=>`<label class="calc-option"><input type="radio" name="calc-${esc(puzzle.id)}-${i}" value="${k}"><span>${esc(option)}</span></label>`).join('')}</span></div>`;
+  if(recall){
+   // In a round the four levels are tiles that appear once the solution is open; one tap rates the card (see setupPuzzles).
+   const known=[part.answerOption,...(part.acceptOptions||[])].map(String);
+   return `<div class="calc-part recall-rate"><span class="calc-label" lang="de">${esc(part.label)}</span><input type="hidden" data-calc-input="${i}" value=""><span class="rate-tiles" role="group" aria-label="${esc(part.label)}" lang="de">${part.options.map((option,k)=>`<button type="button" class="rate-tile" data-rate="${RATE_LEVELS[k]||'good'}" data-recall-rate="${esc(option)}">${rateFace(RATE_LEVELS[k])}<span class="rate-text"><b class="rate-name">${esc(option)}</b><small>${known.includes(String(option))?'gewusst':'noch üben'}</small></span></button>`).join('')}</span></div>`;
+  }
+  if(calcLong(part))return `<div class="calc-part"><span class="calc-label">${esc(part.label)}</span><span class="calc-options" role="radiogroup" aria-label="${esc(part.label)}" data-calc-input="${i}">${part.options.map((option,k)=>`<label class="calc-option"><input type="radio" name="calc-${esc(puzzle.id)}-${i}" value="${k}"><span>${esc(option)}</span></label>`).join('')}</span></div>`;
   const field=part.kind==='choice'
    ?`<select data-calc-input="${i}" aria-label="${esc(part.label)}"><option value="">– wählen –</option>${part.options.map(option=>`<option value="${esc(option)}">${esc(option)}</option>`).join('')}</select>`
    :`<input type="text" inputmode="${part.answer<0?'text':'decimal'}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" data-calc-input="${i}" aria-label="${esc(part.label)}" placeholder="${part.answer<0?'−':''}${part.decimals?'0.'+'0'.repeat(part.decimals):'0'}">${part.unit?`<span class="calc-unit">${esc(part.unit)}</span>`:''}`;
@@ -1727,6 +1761,14 @@ setupPuzzles=function(root,onChange=null){
   const puzzle=calcOf(card);
   if(!puzzle)return;
   card.querySelector('[data-recall-reveal]')?.addEventListener('click',()=>{const check=document.getElementById('check');if(check){check.disabled=false;check.click();}});
+  // Recall card in a round: one tap on a level rates the card and the next card comes, without "Antwort prüfen".
+  card.querySelectorAll('[data-recall-rate]').forEach(button=>button.addEventListener('click',()=>{
+   const field=card.querySelector('[data-calc-input]'),check=document.getElementById('check');
+   if(!field)return;
+   field.value=button.dataset.recallRate;onChange?.(card);
+   if(!check)return;
+   check.disabled=false;check.click();recallQuiet=Date.now()+450;document.getElementById('next')?.click();
+  }));
   const result=card.querySelector('.puzzle-result'),fields=[...card.querySelectorAll('[data-calc-input]')],rows=()=>[...card.querySelectorAll('.calc-part')];
   const clear=()=>{rows().forEach(row=>row.classList.remove('ok','bad'));if(result)result.textContent='';};
   fields.forEach(el=>{
@@ -2272,7 +2314,7 @@ function reviewView(){stopReviewTimer();if(!reviewState()?.deck.length)return go
  const q=byId[review.current],card=review.cards[q.id],key=puzzleMarkKey(q);if(!review.order[q.id])review.order[q.id]=q.collection==='original'||q.lectureOriginal||q.puzzle?q.options.map((_,i)=>i):shuffled(q.options.map((_,i)=>i));const checked=review.checked,answer=review.answer,ok=checked&&answer===q.correct;
  const body=q.puzzle?puzzleQuizBody(q,checked):`<div class="meta"><span class="pill">${card?`Wiederholung ${card.reps+1}`:'Neue Karte'}</span><span class="pill">${esc(TOPICS[q.topic]?.short||'')}</span>${likelihoodDots(likelihood(q))}</div>${q.exerciseLabel?`<p class="eyebrow" style="letter-spacing:.5px">${esc(q.exerciseLabel)}</p>`:''}${q.contextNote?`<p class="note" lang="en">${esc(q.contextNote)}</p>`:''}<h2 class="stem" id="question-stem" lang="en">${esc(q.stem)}</h2>${questionContext(q)}${tableHTML(q.table)}<fieldset style="padding:0;margin:0;border:0" aria-labelledby="question-stem"><legend class="sr-only">Wähle eine Antwort</legend><div class="choices" lang="en">${review.order[q.id].map((option,position)=>{const right=checked&&option===q.correct,wrong=checked&&answer===option&&option!==q.correct;return `<label class="choice ${answer===option?'selected':''} ${right?'correct':''} ${wrong?'wrong':''} ${checked?'disabled':''}"><input type="radio" name="answer" value="${option}" ${answer===option?'checked':''} ${checked?'disabled':''}><span><span class="letter">${'ABCDEFGHIJKL'[position]}</span> ${esc(q.options[option])}${right?'<strong class="flag" lang="de">✓ Richtige Antwort</strong>':wrong?'<strong class="flag" lang="de">× Deine Antwort</strong>':''}</span></label>`;}).join('')}</div></fieldset>`;
  const score=q.puzzle?puzzleMarks.get(key):null,result=checked?(q.puzzle?(isRecall(q.puzzle)?'Wie gut konntest du es?':ok?'✓ Alles richtig':score?`${score.right} von ${score.total} richtig`:'Noch nicht ganz richtig'):(ok?'✓ Richtig':'Noch einmal genau hinsehen')):'';
- const ratings=checked?`<div class="review-ratings" role="group" aria-label="Wie schwer war die Karte?">${REVIEW_RATINGS.map(([rating,label],i)=>`<button type="button" class="${rating===(ok?'good':'again')?'primary':'secondary'} review-rate" data-rate="${rating}"><span>${i+1} · ${label}</span><small>${reviewDuration(reviewSchedule(card,rating).iv)}</small></button>`).join('')}</div>`:`<div class="actions"><span></span><button class="primary" id="check" ${answer===undefined&&!(q.puzzle&&puzzleTouched(puzzleDrafts.get(key)))?'disabled':''}>Antwort prüfen</button></div>`;
+ const ratings=checked?`<div class="review-ratings" role="group" aria-label="Wie schwer war die Karte?">${REVIEW_RATINGS.map(([rating,label],i)=>`<button type="button" class="${rating===(ok?'good':'again')?'primary':'secondary'} review-rate rate-tile" data-rate="${rating}" aria-keyshortcuts="${i+1}">${rateFace(rating)}<span class="rate-text"><b class="rate-name">${label}</b><small>${reviewDuration(reviewSchedule(card,rating).iv)}</small></span></button>`).join('')}</div>`:`<div class="actions"><span></span><button class="primary" id="check" ${answer===undefined&&!(q.puzzle&&puzzleTouched(puzzleDrafts.get(key)))?'disabled':''}>Antwort prüfen</button></div>`;
  const explanation=checked?`<section class="feedback ${ok?'':'wrong'}" aria-live="polite"><h3 id="feedback-result">${result}</h3><details class="feedback-more"><summary>Erklärung anzeigen</summary>${q.puzzle?`<p>${esc(q.puzzle.explanation)}</p><details class="translation" lang="en"><summary>English explanation</summary><p>${esc(q.puzzle.explanationEn)}</p></details>`:`<p>${esc(q.explanation)}</p>${answer!==undefined&&answer!==q.correct?`<p><b>Zu deiner Auswahl:</b> ${esc(q.wrongExplanations[answer])}</p>`:''}${q.explanationEn?`<details class="translation" lang="en"><summary>English explanation</summary><p>${esc(q.explanationEn)}</p></details>`:''}`}${sourceHTML(q)}</details></section>`:'';
  app.innerHTML=`${head}<div class="session-layout review-layout"><section><article class="panel qcard" style="margin-top:20px">${body}${ratings}${explanation}</article></section></div>`;
  document.getElementById('pause').addEventListener('click',()=>go('home'));
