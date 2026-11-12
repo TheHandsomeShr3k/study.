@@ -930,6 +930,506 @@ details.translation p,.feedback-more>p,.puzzle-item+p{white-space:pre-line}
 .pwa-footer{margin-top:8px}.pwa-footer-info{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}.pwa-footer-info>summary{display:list-item;width:fit-content;min-height:44px;padding:10px 2px;font-size:12px;font-weight:650}.pwa-footer-info[open]{padding-bottom:8px}.pwa-footer-info p{font-size:12px;line-height:1.6;margin:4px 0 12px}.pwa-footer-info #pwa-detail-status{font-weight:650}
 @media print{.pwa-wrap,.pwa-footer{display:none}}
 </style>
+<style id="ui-stapel-style">
+/* UI "Stapel" (Konzept A, 2026-11-12). build.mjs puts this file into its own <style id="ui-stapel-style"> at the end
+   of <head>; the markup it styles comes from the trainer script plus ui-stapel.js (classes that start with "ua-").
+   Rules start with ":root" so they also win over the trainer's own dark-mode rules ([data-theme="dark"] ...).
+   Idea: every screen is a card on the colour of its course; the next step is one big button at the bottom. */
+
+/* 1. Colours. The old token names stay, so puzzles, diagrams and figures follow without their own rules. */
+:root{
+  --ink:#1d1830;--muted:#5d5670;--paper:#f4f2f8;--card:#ffffff;--line:#ddd7e8;--soft:#efecf5;--glass:rgba(255,255,255,.62);--edge:rgba(29,24,48,.12);
+  --green:#1d1830;--light:#e1dafa;--orange:#6a52b8;--red:#a8324f;--yellow:#f6e4a6;--shadow:none;--radius:26px;
+  --lavender:#e1dafa;--lavender-hover:#d3c9f5;--lavender-active:#c6baf0;--lavender-soft:#efecf5;--lavender-border:#8a76c9;--purple-text:#43357f;
+  --mint:#cdeed8;--mint-border:#3d8a62;--success-text:#1c5638;
+  --pink:#f9cfdc;--blush:#f9cfdc;--pink-border:#b85f7f;--error-text:#7a2946;
+  --peach:#fbdcc3;--peach-border:#c08a5a;--warm-text:#6d4420;
+  --tone:#ddd5f8;--tone-muted:#544b62;
+  --chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d1830' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 9.5l5.5 5.5 5.5-5.5'/%3E%3C/svg%3E");
+}
+:root[data-theme="dark"]{
+  --ink:#f4f0fb;--muted:#bcb3cd;--paper:#15131c;--card:#252232;--line:#3d384e;--soft:#2e2a3c;--glass:rgba(255,255,255,.11);--edge:rgba(0,0,0,.4);
+  --green:#f4f0fb;--light:#3a3260;--orange:#b9a6ff;--red:#f0afc7;--yellow:#52441d;--shadow:none;
+  --lavender:#3a3260;--lavender-hover:#463c73;--lavender-active:#524686;--lavender-soft:#2e2a3c;--lavender-border:#9d8add;--purple-text:#dcd3ff;
+  --mint:#1f4634;--mint-border:#5fae86;--success-text:#b9ebcf;
+  --pink:#55283a;--blush:#55283a;--pink-border:#c97b97;--error-text:#ffc6d8;
+  --peach:#4f3826;--peach-border:#b98d68;--warm-text:#f3cfad;
+  --tone:#3d3566;--tone-muted:#d5cce0;
+  --chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f4f0fb' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 9.5l5.5 5.5 5.5-5.5'/%3E%3C/svg%3E");
+}
+:root [data-ua-tone="lavender"]{--tone:#ddd5f8}
+:root [data-ua-tone="mint"]{--tone:#cbead4}
+:root [data-ua-tone="blush"]{--tone:#f6cedb}
+:root [data-ua-tone="sand"]{--tone:#f6e4a6}
+:root [data-ua-tone="sky"]{--tone:#cbe0f6}
+:root [data-ua-tone="teal"]{--tone:#bfe8e2}
+:root [data-ua-tone="lime"]{--tone:#dfe9ad}
+:root [data-ua-tone="peach"]{--tone:#fbd3bd}
+:root[data-theme="dark"] [data-ua-tone="lavender"]{--tone:#3d3566}
+:root[data-theme="dark"] [data-ua-tone="mint"]{--tone:#234836}
+:root[data-theme="dark"] [data-ua-tone="blush"]{--tone:#572c40}
+:root[data-theme="dark"] [data-ua-tone="sand"]{--tone:#52441d}
+:root[data-theme="dark"] [data-ua-tone="sky"]{--tone:#243f5a}
+:root[data-theme="dark"] [data-ua-tone="teal"]{--tone:#1d4843}
+:root[data-theme="dark"] [data-ua-tone="lime"]{--tone:#3f4822}
+:root[data-theme="dark"] [data-ua-tone="peach"]{--tone:#593a2b}
+
+@media screen{
+/* 2. Page, header, footer */
+:root body{background:var(--paper);color:var(--ink);font-family:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+:root body[data-ua-tone]{background:var(--tone)}
+:root .ua-off{display:none!important}
+:root .wrap{max-width:1040px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+:root main{padding-top:6px;padding-bottom:max(36px,env(safe-area-inset-bottom))}
+:root header{background:transparent;border:0;padding-top:max(8px,env(safe-area-inset-top))}
+:root .bar{min-height:56px;gap:8px 10px;flex-wrap:wrap;padding-top:0;padding-bottom:6px}
+:root .brand{flex:1;gap:10px}
+:root .brand b{font-size:22px;font-weight:850;letter-spacing:-.02em}
+:root .brand small{display:none}
+:root .brand .mark{width:40px;min-width:40px;height:40px;flex:0 0 40px;border-radius:12px;border:0;box-shadow:none}
+:root .language-control{margin-left:0}
+:root .language-control select{min-height:44px;padding:0 36px 0 14px;border:0;border-radius:22px;background-color:var(--soft);font-size:14px;font-weight:800;max-width:none}
+:root .nav{flex:0 0 auto;width:auto;gap:6px;align-items:center}
+:root .nav-theme-group{gap:6px}
+:root .nav .plain{min-height:44px;padding:0 14px;border-radius:22px;font-size:14.5px;font-weight:800;color:var(--ink);background:var(--glass)}
+:root .nav .plain:hover{background:var(--glass);color:var(--ink)}
+:root .nav .plain[aria-current="page"]{background:var(--ink);color:var(--paper)}
+:root .nav .theme-toggle{flex:0 0 52px;width:52px;min-height:44px}
+:root .theme-track{background:var(--glass);border:0;box-shadow:inset 0 0 0 2px var(--edge)}
+:root body:not([data-ua-tone]) .theme-track{background:var(--soft)}
+:root body[data-ua-view="courses"] .nav [data-view="courses"]{display:none}
+/* inside a course: "‹ Fächer" and the switch in the first row, the three areas as one row of tabs below */
+:root body[data-ua-tone] .brand,:root body[data-ua-tone] .language-control{display:none}
+:root body[data-ua-tone] .nav{flex:1 0 100%;width:100%;flex-wrap:wrap}
+:root body[data-ua-tone] .nav-theme-group{flex:1 0 100%;justify-content:space-between}
+:root body[data-ua-tone] .nav [data-view="courses"]{background:none;padding:0 12px 0 2px;font-size:16px}
+:root body[data-ua-tone] .nav [data-view="courses"]::before{content:"‹";display:inline-block;margin-right:6px;font-size:24px;line-height:1;transform:translateY(-2px)}
+:root body[data-ua-tone] .nav>.plain{flex:1 1 0;min-width:0;padding:0 6px;border-radius:14px}
+/* the course page itself needs no tabs: Merkblatt and Quellen are buttons under the piles */
+:root body[data-ua-view="home"] .nav>.plain{display:none}
+:root body[data-ua-view="quiz"] header,:root body[data-ua-view="review"] header,:root body[data-ua-view="lesson"] header,
+:root body[data-ua-view="quiz"] footer,:root body[data-ua-view="review"] footer,:root body[data-ua-view="lesson"] footer,
+:root body[data-ua-view="quiz"] .pwa-wrap,:root body[data-ua-view="review"] .pwa-wrap,:root body[data-ua-view="lesson"] .pwa-wrap{display:none}
+:root footer{border:0;color:var(--tone-muted);padding:10px 0 max(18px,env(safe-area-inset-bottom))}
+:root body:not([data-ua-tone]) footer{color:var(--muted)}
+:root .foot{flex-wrap:wrap;gap:8px 16px}
+:root .foot button{min-height:44px;font-weight:800;color:inherit;background:var(--glass);border-radius:22px;padding:0 14px}
+:root .pwa-alert{border:0;border-radius:16px;background:var(--glass);color:inherit;font-weight:600}
+:root .pwa-footer-info>summary{color:inherit}
+
+/* 3. Type, buttons, fields, cards */
+:root h1,:root h2,:root h3{color:var(--ink);font-weight:850;letter-spacing:-.02em}
+:root h1{font-size:clamp(27px,4vw,40px);line-height:1.1;margin-bottom:12px}
+:root h2{font-size:21px;line-height:1.2;margin-bottom:10px}
+:root .eyebrow,:root .topicnum{color:var(--muted);font-weight:800;letter-spacing:.07em}
+:root .lead{color:var(--ink);font-size:16px;line-height:1.5}
+:root body[data-ua-tone] main>.sheet>.eyebrow,:root body[data-ua-tone] main>.sheet>.lead,:root body[data-ua-tone] main>.sheet>.hint{color:var(--tone-muted)}
+:root .hint,:root .source,:root .legend{color:var(--muted)}
+:root .panel{background:var(--card);border:0;border-radius:26px;box-shadow:none;padding:18px}
+:root .primary,:root .secondary,:root .ua-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;text-align:center;line-height:1.2;box-shadow:none;transform:none}
+:root .primary{min-height:56px;padding:10px 20px;border:0;border-radius:20px;background:var(--ink);color:var(--paper);font-size:17px;font-weight:800}
+:root .primary:hover:not(:disabled),:root .primary:active:not(:disabled){background:var(--ink);color:var(--paper);box-shadow:none}
+:root .primary:active:not(:disabled),:root .secondary:active:not(:disabled){transform:translateY(1px)}
+:root .secondary{min-height:52px;padding:8px 16px;border:0;border-radius:18px;background:var(--soft);color:var(--ink);font-size:15.5px;font-weight:800}
+:root .secondary:hover:not(:disabled),:root .secondary:active:not(:disabled){background:var(--soft);border-color:transparent}
+:root .primary:disabled,:root .secondary:disabled{opacity:1;background:var(--soft);color:var(--muted);box-shadow:none;border-color:transparent}
+:root body[data-ua-tone] main>.sheet>.secondary,:root body[data-ua-tone] main>.sheet>.plain,:root body[data-ua-tone] main>.actions .secondary,:root body[data-ua-tone] .reviewfilter .secondary{background:var(--glass)}
+:root .plain{color:var(--ink);font-weight:800}
+:root .plain:hover,:root .plain:active{background:var(--glass);color:var(--ink)}
+:root .full{width:100%;margin-top:12px}
+:root select,:root input:not([type="radio"]):not([type="checkbox"]){min-height:50px;border:0;border-radius:16px;background-color:var(--soft);color:var(--ink);font-size:16px;font-weight:700}
+:root select{-webkit-appearance:none;appearance:none;padding:0 40px 0 14px;background-image:var(--chevron);background-repeat:no-repeat;background-position:right 12px center;background-size:18px 18px;text-overflow:ellipsis}
+:root body[data-ua-tone] main>.sheet>select{background-color:var(--card)}
+:root .label{font-size:13px;font-weight:800;margin:14px 0 6px}
+:root .pill,:root .ua-chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:3px 11px;border:0;border-radius:999px;background:var(--soft);color:var(--ink);font-size:13px;font-weight:800;white-space:nowrap}
+:root .meta .pill:first-child,:root .meta .pill:nth-child(2){background:var(--soft);border:0;color:var(--ink)}
+:root .ua-chip{background:var(--glass)}
+:root .panel .ua-chip,:root .ua-pile .ua-chip{background:var(--soft)}
+:root .likelihood{border:0;padding:0;font-size:12px;font-weight:700;color:var(--muted)}
+:root .likelihood-dots{color:var(--ink);font-size:11px}
+:root .segment{display:grid;gap:4px;padding:4px;border:0;border-radius:16px;background:var(--soft)}
+:root .segment span{min-height:44px;display:grid;place-items:center;padding:4px 6px;border-radius:12px;font-size:14.5px;font-weight:800;color:var(--muted)}
+:root .segment input:checked+span{background:var(--ink);color:var(--paper);box-shadow:none}
+:root .note,:root .banner,:root .session-alert{border:0;border-radius:18px;background:var(--peach);color:var(--warm-text)}
+:root .note{border-left:0;border-radius:18px}
+:root .banner{padding:16px}
+:root .banner .secondary{background:var(--glass)}
+:root .context{background:var(--soft);color:var(--ink);border-radius:16px}
+:root .passage{background:var(--soft);border:0;border-radius:16px}
+:root .tablewrap{border:2px solid var(--line);border-radius:16px;background:var(--card)}
+:root th{background:var(--soft);color:var(--ink)}
+:root th,:root td{border-color:var(--line)}
+:root tbody tr:nth-child(even) td{background:transparent}
+:root .formula{background:var(--soft);color:var(--ink);border-radius:14px}
+:root .english-box{background:var(--soft);border:0;border-radius:18px;color:var(--ink)}
+:root .english-box .why,:root .why{border-color:var(--line)}
+:root .sourcewarning{background:var(--peach);border:0;border-radius:18px;color:var(--warm-text)}
+:root .progress{height:8px;border-radius:4px;background:var(--soft)}
+:root .progress>div{background:var(--mint-border)}
+:root .toast,:root .ua-snack{background:var(--ink);color:var(--paper);border-radius:18px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+:root .toast{z-index:40;top:max(12px,env(safe-area-inset-top));bottom:auto;width:max-content}
+:root .ua-ic{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+:root .ua-ic.ua-fill{fill:currentColor;stroke:none}
+:root .ua-play{flex:0 0 44px;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--paper)}
+:root .ua-play .ua-ic{width:20px;height:20px;margin-left:2px}
+:root .ua-play-big{flex-basis:52px;width:52px;height:52px}
+:root .ua-ghost{min-height:44px;padding:0 16px;border-radius:22px;background:var(--soft);color:var(--ink);font-size:14.5px;font-weight:800}
+:root .ua-counts{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+:root .ua-counts span{padding:3px 10px;border-radius:999px;font-size:13px;font-weight:800;white-space:nowrap}
+:root .ua-count-due{background:var(--pink);color:var(--error-text)}
+:root .ua-count-new{background:var(--lavender);color:var(--purple-text)}
+:root .ua-count-later{background:var(--soft);color:var(--muted)}
+:root .ua-bar{height:8px;border-radius:4px;background:var(--soft);overflow:hidden;margin-top:9px}
+:root .ua-bar i{display:block;height:100%;border-radius:4px;background:var(--mint-border)}
+
+/* 4. Course list: the stack */
+:root .ua-hub{max-width:560px;margin:0 auto;padding-top:4px}
+:root .ua-stack{display:flex;flex-direction:column}
+:root .course-card.ua-card{position:relative;display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;min-height:80px;margin-top:-20px;padding:8px 12px 28px 18px;border:0;border-radius:24px;background:var(--tone);color:var(--ink);box-shadow:0 -1px 0 var(--edge),0 -8px 14px -10px var(--edge);transition:none;cursor:pointer}
+:root .course-card.ua-card:hover,:root .course-card.ua-card:active{transform:none;background:var(--tone);box-shadow:0 -1px 0 var(--edge),0 -8px 14px -10px var(--edge)}
+:root .course-card.ua-card:first-child{margin-top:0;box-shadow:none}
+:root .course-card.ua-card:last-child{min-height:60px;padding-bottom:8px}
+:root .ua-card .course-icon{display:none}
+:root .ua-card-main{flex:1;min-width:0;min-height:44px;padding:0;border:0;background:none;color:inherit;text-align:left;font:inherit}
+:root .ua-card-text{display:block;font-size:15px;line-height:19px;font-weight:600}
+:root .ua-card .course-name{font-size:15px;line-height:19px;font-weight:800;letter-spacing:0;margin:0}
+:root .ua-card .course-status{display:inline;margin:0;padding:0;background:none;border-radius:0;font-size:15px;font-weight:600;color:var(--tone-muted);white-space:nowrap}
+:root .ua-away{display:none;flex:none;min-width:104px;height:44px;padding:0 16px;border:0;border-radius:22px;background:var(--ink);color:var(--paper);font-size:15px;font-weight:800}
+:root .ua-editing .ua-away,:root .ua-swiped .ua-away{display:block}
+:root .ua-editing .ua-card>.ua-play,:root .ua-swiped>.ua-play{display:none}
+:root .course-card.ua-card.ua-open{display:block;padding:16px 16px 36px;cursor:default}
+:root .course-card.ua-card.ua-open:last-child{padding-bottom:16px}
+:root .ua-open-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+:root .ua-open .ua-chip.course-status{display:inline-flex;padding:3px 11px;border-radius:999px;background:var(--glass);font-size:13px;font-weight:800;color:var(--ink)}
+:root .ua-open .course-meta{display:block;margin:0;padding:0;background:none;border-radius:0;font-size:13px;font-weight:700;color:var(--tone-muted);align-self:auto}
+:root .ua-open .ua-card-main{display:block;width:100%;margin:8px 0 12px;cursor:pointer}
+:root .ua-open .course-name{display:block;font-size:25px;line-height:1.12;letter-spacing:-.02em;font-weight:850}
+:root .ua-btn{border:0;font:inherit;color:var(--ink);text-align:left;justify-content:flex-start}
+:root .ua-btn small{display:block;font-size:13px;font-weight:600;opacity:.82}
+:root .ua-primary{width:100%;min-height:60px;justify-content:space-between;padding:8px 8px 8px 20px;border-radius:20px;background:var(--ink);color:var(--paper);font-size:17px;font-weight:800}
+:root .ua-primary .ua-play{background:var(--paper);color:var(--ink)}
+:root .ua-open-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin-top:8px}
+:root .ua-glass{min-height:52px;padding:6px 14px;border-radius:18px;background:var(--glass);font-size:15px;font-weight:800}
+:root .ua-empty,:root .ua-tip{margin:16px 0 0;padding:14px 16px;border-radius:18px;background:var(--lavender);font-size:14.5px;line-height:1.4;font-weight:600}
+:root .ua-tip b{font-weight:850;color:var(--purple-text)}
+:root .ua-hub-tools{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:22px}
+:root .ua-ablage{position:relative;z-index:0;display:flex;align-items:center;gap:10px;width:100%;min-height:62px;margin-top:40px;padding:8px 14px 8px 18px;border:2px dashed var(--muted);border-radius:22px;background:var(--paper);color:var(--ink);text-align:left;font-size:16px;line-height:20px;font-weight:850}
+:root .ua-ablage-text{flex:1;min-width:0}
+:root .ua-ablage-text small{display:block;font-size:13px;font-weight:600;color:var(--muted)}
+:root .ua-ablage-edges i{position:absolute;z-index:-1;top:-11px;left:20px;right:20px;height:22px;border-radius:12px 12px 0 0;background:var(--tone)}
+:root .ua-ablage-edges i:nth-child(2){top:-19px;left:34px;right:34px}
+:root .ua-ablage-edges i:nth-child(3){top:-27px;left:48px;right:48px}
+:root .ua-overlay{position:fixed;inset:0;z-index:20;display:grid;align-items:end;justify-items:center;background:rgba(18,14,28,.45);overflow:auto}
+:root .ua-sheet{width:100%;max-width:560px;max-height:100%;overflow:auto;padding:18px 14px max(18px,env(safe-area-inset-bottom));border-radius:30px 30px 0 0;background:var(--paper)}
+:root .ua-sheet-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 10px;padding:0 4px 10px}
+:root .ua-sheet-head h2{margin:0}
+:root .ua-sheet-head p{margin:0;font-size:13px;font-weight:600;color:var(--muted)}
+:root .ua-ablage-row{display:flex;align-items:center;gap:10px;min-height:60px;margin-bottom:8px;padding:8px 8px 8px 16px;border-radius:20px;background:var(--tone)}
+:root .ua-ablage-row p{flex:1;min-width:0;margin:0;font-size:15px;line-height:19px}
+:root .ua-ablage-row small{display:block;font-size:13px;font-weight:600;color:var(--tone-muted)}
+:root .ua-ablage-row button{flex:none;min-height:44px;padding:0 14px;border-radius:22px;background:var(--ink);color:var(--paper);font-size:14px;font-weight:800}
+:root .ua-sheet .secondary{background:var(--card);box-shadow:inset 0 0 0 2px var(--line)}
+:root .ua-snack{position:fixed;z-index:25;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:10px;width:min(560px,calc(100vw - 24px));padding:8px 8px 8px 16px;font-size:14px;line-height:1.35}
+:root .ua-snack span{flex:1;min-width:0}
+:root .ua-snack button{flex:none;min-height:44px;padding:0 14px;border-radius:14px;background:var(--paper);color:var(--ink);font-weight:800;font-size:14px}
+
+/* 5. Course page: the piles */
+:root .ua-home{max-width:560px;margin:0 auto}
+:root .ua-title{font-size:27px;line-height:1.1;letter-spacing:-.025em;margin:2px 0 8px}
+:root .ua-stats{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 0 16px;font-size:13px;font-weight:700;color:var(--tone-muted)}
+:root .ua-pile{position:relative;z-index:0;margin:0 0 24px;padding:16px;border-radius:24px}
+:root .ua-pile::before,:root .ua-pile::after{content:"";position:absolute;z-index:-1;left:12px;right:12px;bottom:-7px;height:30px;border-radius:22px;background:var(--card);opacity:.6}
+:root .ua-pile::after{left:26px;right:26px;bottom:-13px;opacity:.32}
+:root .ua-setup{position:relative;top:auto}
+:root .ua-pile h2{font-size:19px;margin:0}
+:root .ua-pile h2 span{margin-left:4px;font-size:13px;font-weight:700;letter-spacing:0;color:var(--muted)}
+:root .ua-pile-sub{margin:2px 0 12px;font-size:13px;font-weight:600;color:var(--muted)}
+:root .ua-seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;padding:4px;border-radius:16px;background:var(--soft)}
+:root .ua-seg button{min-height:44px;padding:0;border-radius:12px;background:none;color:var(--muted);font-size:15px;font-weight:800}
+:root .ua-seg button.on{background:var(--ink);color:var(--paper)}
+:root .ua-setup-row{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:8px 0 12px}
+:root .ua-setup-row select{width:100%;min-height:52px;font-size:15px;font-weight:800}
+:root .ua-setup button[type="submit"]{width:100%;margin:0}
+:root .ua-setup #available{margin:0 2px 8px;font-size:12.5px}
+:root .ua-more{margin-top:8px}
+:root .ua-more>summary,:root .ua-info>summary{display:flex;align-items:center;min-height:44px;cursor:pointer;font-size:14.5px;font-weight:800}
+:root .ua-more>summary,:root .ua-info>summary,:root .path-more>summary,:root .path-de>summary,:root .path-slides>summary,:root .path-sections>summary,:root .practice-task>summary,:root .summary-de>summary,:root .test-solution summary,:root .essay-answer>summary,:root details.translation>summary,:root .recall-solution>summary,:root .why summary,:root .passage summary{list-style:none}
+:root .ua-more>summary::-webkit-details-marker,:root .ua-info>summary::-webkit-details-marker,:root .path-more>summary::-webkit-details-marker,:root .path-de>summary::-webkit-details-marker,:root .path-slides>summary::-webkit-details-marker,:root .path-sections>summary::-webkit-details-marker,:root .practice-task>summary::-webkit-details-marker,:root .summary-de>summary::-webkit-details-marker,:root .test-solution summary::-webkit-details-marker,:root .essay-answer>summary::-webkit-details-marker,:root details.translation>summary::-webkit-details-marker,:root .recall-solution>summary::-webkit-details-marker,:root .why summary::-webkit-details-marker,:root .passage summary::-webkit-details-marker{display:none}
+:root .ua-more>summary::before,:root .ua-info>summary::before,:root .path-more>summary::before,:root .path-de>summary::before,:root .path-slides>summary::before,:root .path-sections>summary::before,:root .practice-task>summary::before,:root .summary-de>summary::before,:root .test-solution summary::before,:root .essay-answer>summary::before,:root details.translation>summary::before,:root .recall-solution>summary::before,:root .why summary::before,:root .passage summary::before{content:"";flex:none;width:8px;height:8px;margin:0 12px 0 3px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;border-radius:1px;transform:rotate(-45deg);transition:transform .15s}
+:root details[open]>summary::before{transform:rotate(45deg)}
+:root .ua-more[open]>summary{margin-bottom:2px}
+:root .ua-more select{font-size:15px}
+:root .ua-pile-cards .ua-counts{margin:8px 0 0}
+:root .ua-pile-actions{display:grid;gap:8px;margin-top:12px}
+:root .ua-pile-actions:empty{display:none}
+:root .ua-pile-actions button{width:100%;margin:0}
+:root .ua-pile-actions .secondary{min-height:48px;font-size:14.5px}
+:root .ua-pile-line{display:flex;align-items:center;gap:12px}
+:root .ua-pile-line>div{flex:1;min-width:0}
+:root .ua-pile-title{margin:2px 0 0;font-size:14.5px;line-height:1.3;font-weight:650}
+:root .ua-extras{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+:root .ua-extras .secondary{flex:1 1 150px;min-height:56px;margin:0;background:var(--glass)}
+:root .ua-info{margin-top:4px;padding:0 16px;border-radius:22px;background:var(--glass)}
+:root .ua-info[open]{padding-bottom:16px}
+:root .ua-info .newset{padding:16px;border-radius:20px;background:var(--card);box-shadow:none}
+:root .ua-info .newset h2{font-size:19px}
+:root .ua-info .sectionhead{margin-top:18px}
+:root .ua-info .topics{grid-template-columns:1fr}
+:root .ua-info .topic,:root .ua-info .topic:nth-child(n),:root .ua-info .topic.wide{min-height:0;padding:16px;border:0;border-radius:20px;background:var(--card);box-shadow:none}
+:root .ua-info .topic h3{font-size:17px}
+:root .ua-info .topic button{min-height:44px;color:var(--ink)}
+:root .ua-info .method-box{margin:12px 0}
+:root .method-box>summary{min-height:44px;display:flex;align-items:center}
+:root .method-grid{grid-template-columns:1fr}
+
+/* 6. Dialogs: a sheet from the bottom on a phone, a card in the middle on a wide screen */
+:root body>div[style*="place-items"]{z-index:30!important;background:rgba(18,14,28,.45)!important;-webkit-backdrop-filter:none;backdrop-filter:none;align-items:end!important;padding:0!important}
+:root .panel[role="dialog"]:not(.ua-sheet){width:100%;max-width:560px!important;max-height:100%;overflow:auto;padding:22px 16px max(18px,env(safe-area-inset-bottom));border:0;border-radius:30px 30px 0 0;background:var(--paper);box-shadow:none}
+:root .choice-dialog .segment{background:var(--card)}
+:root .choice-list{gap:8px}
+:root .choice-option{align-items:flex-start;gap:1px;text-align:left;justify-content:center;flex-direction:column}
+:root .choice-option.secondary{background:var(--card);box-shadow:inset 0 0 0 2px var(--line)}
+:root .choice-option small{font-size:13px;font-weight:600;opacity:.82}
+:root .panel[role="dialog"] .actions{margin-top:12px}
+:root .panel[role="dialog"] .actions .primary,:root .panel[role="dialog"] .actions .secondary{flex:1}
+:root .panel[role="dialog"] .actions .secondary{background:var(--card);box-shadow:inset 0 0 0 2px var(--line)}
+@media (min-width:760px){
+  :root body>div[style*="place-items"],:root .ua-overlay{align-items:center!important;padding:22px!important}
+  :root .panel[role="dialog"]:not(.ua-sheet),:root .ua-sheet{border-radius:30px}
+}
+
+/* 7. Round and card deck: bar on top, card, sheet at the bottom */
+:root body[data-ua-view="quiz"] main,:root body[data-ua-view="review"] main,:root body[data-ua-view="lesson"] main{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;padding-top:0;padding-bottom:0;max-width:720px}
+:root .ua-run-top{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:10px;min-height:58px;margin:0 -6px;padding:max(6px,env(safe-area-inset-top)) 0 6px;background:var(--tone)}
+:root .ua-round{flex:0 0 44px;width:44px;height:44px;padding:0;border-radius:50%;display:grid;place-items:center;background:var(--glass);color:var(--ink)}
+:root .ua-segs{flex:1;display:flex;gap:3px;min-width:0}
+:root .ua-segs i{flex:1;height:7px;border-radius:4px;background:var(--edge)}
+:root .ua-segs i.ok{background:var(--mint-border)}
+:root .ua-segs i.no{background:var(--pink-border)}
+:root .ua-segs i.answered{background:var(--lavender-border)}
+:root .ua-segs i.now{background:var(--ink)}
+:root .ua-meter{flex:1;height:7px;border-radius:4px;background:var(--edge);overflow:hidden}
+:root .ua-meter i{display:block;height:100%;border-radius:4px;background:var(--ink)}
+:root .ua-count{flex:none;min-height:44px;padding:0 12px;border-radius:22px;background:none;color:var(--ink);font-size:14px;font-weight:800;white-space:nowrap;display:inline-flex;align-items:center}
+:root button.ua-count{background:var(--glass)}
+:root .ua-run-top .ua-counts{flex:1;justify-content:flex-end;padding-right:6px}
+:root .ua-run-top .ua-count-later{background:var(--glass);color:var(--ink)}
+:root body[data-ua-view="quiz"] .session-heading,:root body[data-ua-view="review"] .session-heading,:root body[data-ua-view="quiz"] .session-layout>section>.session-top,:root body[data-ua-view="quiz"] .session-layout>section>.progress{display:none}
+:root .session-layout{display:flex;flex-direction:column;align-items:stretch;flex:1;gap:0}
+:root body[data-ua-view="quiz"] .session-layout,:root body[data-ua-view="review"] .session-layout{margin-top:calc(-58px - env(safe-area-inset-top));padding-top:calc(58px + env(safe-area-inset-top))}
+:root .feedback-more>summary{scroll-margin-top:calc(70px + env(safe-area-inset-top))}
+:root .session-layout>section{display:flex;flex-direction:column;flex:1;min-width:0}
+:root .qcard{position:relative;z-index:0;min-height:0;margin:4px 0 22px!important;padding:18px}
+:root .qcard::before,:root .qcard::after{content:"";position:absolute;z-index:-1;left:12px;right:12px;bottom:-7px;height:30px;border-radius:24px;background:var(--card);opacity:.6}
+:root .qcard::after{left:26px;right:26px;bottom:-13px;opacity:.32}
+:root .qcard .meta{align-items:center;gap:6px;margin-bottom:12px}
+:root .qcard .likelihood{margin-left:auto}
+:root .stem{font-size:21px;line-height:1.26;letter-spacing:-.015em;font-weight:800;margin-bottom:16px}
+:root .question-rationale>summary{min-height:44px;border:0;background:var(--soft);font-weight:800}
+:root .rationale-preview{border:0;background:var(--soft)}
+:root .choices{gap:9px}
+:root .choice{position:relative;display:block;min-height:56px;padding:8px 12px 8px 8px;border:0;border-radius:18px;background:var(--soft);color:var(--ink);font-size:16px;font-weight:650;line-height:1.25}
+:root .choice:hover{background:var(--soft);border:0}
+:root .choice input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+:root .choice>span{display:grid;grid-template-columns:40px minmax(0,1fr);grid-template-rows:1fr auto;column-gap:12px;align-items:center;min-height:40px}
+:root .choice .letter{grid-column:1;grid-row:1/span 2;display:grid;place-items:center;width:40px;height:40px;margin:0;border-radius:13px;background:var(--card);color:var(--ink);font-size:15px;font-weight:850}
+:root .choice strong.flag{grid-column:2;margin:1px 0 0;font-size:12px;font-weight:800;letter-spacing:.02em}
+:root .choice.selected{background:var(--lavender);box-shadow:inset 0 0 0 2px var(--ink)}
+:root .choice.selected .letter{background:var(--ink);color:var(--paper)}
+:root .choice:has(input:focus-visible){outline:3px solid var(--orange);outline-offset:2px}
+:root .choice.correct{padding:8px 12px 8px 8px;border:0;background:var(--mint);color:var(--success-text);box-shadow:inset 0 0 0 2px var(--mint-border)}
+:root .choice.wrong{padding:8px 12px 8px 8px;border:0;background:var(--pink);color:var(--error-text);box-shadow:inset 0 0 0 2px var(--pink-border)}
+:root .choice.correct .letter{background:var(--mint-border);color:var(--card)}
+:root .choice.wrong .letter{background:var(--pink-border);color:var(--card)}
+:root .choice.disabled:not(.correct):not(.wrong){color:var(--muted)}
+:root .ua-dock{position:sticky;bottom:0;z-index:5;margin:auto -16px 0;padding:14px 16px max(16px,env(safe-area-inset-bottom));border-radius:30px 30px 0 0;background:var(--tone);box-shadow:0 -10px 18px -14px var(--edge)}
+:root .ua-dock.ua-ok{background:var(--mint);color:var(--success-text)}
+:root .ua-dock.ua-no{background:var(--pink);color:var(--error-text)}
+:root .ua-dock:has(.feedback-more[open]){position:static;box-shadow:none}
+:root .ua-dock .feedback{margin:0 0 12px;padding:0;border:0;border-radius:0;background:none;color:var(--ink)}
+:root .ua-verdict{display:flex;align-items:center;gap:10px}
+:root .ua-verdict h3{flex:1;margin:0;font-size:21px;line-height:1.15;letter-spacing:-.01em;color:inherit}
+:root .ua-ok .ua-verdict{color:var(--success-text)}
+:root .ua-no .ua-verdict{color:var(--error-text)}
+:root .ua-face{flex:none;display:grid}
+:root .ua-face svg{width:34px;height:34px}
+:root .ua-right-is{flex:none;font-size:13px;font-weight:800;white-space:nowrap}
+:root .ua-why{margin:8px 0 0;font-size:15.5px;line-height:1.4;font-weight:600;color:var(--ink);white-space:normal}
+:root .ua-dock .feedback-more>summary{display:inline-flex;align-items:center;min-height:44px;margin-top:8px;padding:0 14px;border-radius:22px;background:var(--glass);font-size:14px;font-weight:800;color:var(--ink);list-style:none}
+:root .ua-dock .feedback-more>summary::-webkit-details-marker{display:none}
+:root .ua-dock .feedback-more[open]>summary{margin-bottom:12px}
+:root .ua-dock .feedback-more .english-box,:root .ua-dock .feedback-more .sourcewarning{background:var(--glass)}
+:root .ua-dock .feedback-actions,:root .ua-keys{display:none}
+/* a recall card in a round is rated with its tiles, so the sheet has no "Antwort prüfen" (the trainer hides it inside the card, the sheet is outside) */
+:root .session-layout>section:has(.recall-rate) .ua-dock #check{display:none}
+:root .ua-dock .actions{flex-wrap:nowrap;gap:8px;margin:0}
+:root .ua-dock .rightactions{flex:1;gap:8px;min-width:0}
+:root .ua-dock #previous{flex:0 0 56px;width:56px;min-height:56px;padding:0;border-radius:20px;background:var(--glass);font-size:0;color:var(--ink)}
+:root .ua-dock #previous::before{content:"‹";font-size:30px;line-height:1;transform:translateY(-2px)}
+:root .ua-dock #previous:disabled{opacity:.35;color:var(--ink)}
+:root .ua-dock .rightactions button{flex:1 1 0;min-width:0;min-height:56px;padding:6px 10px;border-radius:20px}
+:root .ua-dock .rightactions .secondary{background:var(--glass);font-size:15px}
+:root .ua-dock .rightactions .primary~.secondary{flex:0 1 auto}
+/* the question grid: a sheet that opens from the counter */
+:root .session-layout>aside.side{display:none;position:fixed;z-index:12;left:0;right:0;bottom:0;top:auto;max-height:82vh;overflow:auto;margin:0 auto;max-width:560px;padding:18px 16px max(18px,env(safe-area-inset-bottom));border-radius:30px 30px 0 0;background:var(--paper)}
+:root .session-layout.ua-side-open>aside.side{display:block}
+:root .ua-scrim{display:none;position:fixed;inset:0;z-index:11;background:rgba(18,14,28,.45)}
+:root .ua-side-open>.ua-scrim{display:block}
+:root .side h3{font-size:19px;margin-bottom:12px}
+:root .qgrid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px}
+:root .qdot{min-width:44px;min-height:44px;padding:0;border:0;border-radius:14px;background:var(--card);color:var(--ink);font-size:14px;font-weight:800}
+:root .qdot.answered{background:var(--lavender);color:var(--purple-text)}
+:root .qdot.ok{background:var(--mint);color:var(--success-text)}
+:root .qdot.no{background:var(--pink);color:var(--error-text)}
+:root .qdot.current{outline:3px solid var(--ink);outline-offset:1px}
+:root .ending{min-height:52px;border-radius:18px;background:var(--ink);color:var(--paper);font-size:15.5px;font-weight:800}
+:root .ending:hover{background:var(--ink)}
+/* puzzles and calculation tasks inside the card */
+:root .puzzle-tray{background:var(--soft);border-radius:16px}
+:root .puzzle-item .puzzle-tray,:root .puzzle-card .puzzle-tray{bottom:calc(96px + env(safe-area-inset-bottom))}
+:root .puzzle-card .puzzle-tray{bottom:8px}
+:root .puzzle-tile{min-height:44px;border:2px solid var(--line);border-radius:14px;background:var(--card);font-weight:700}
+:root .dg .puzzle-tile,:root .dg-venn .puzzle-tile,:root .puzzle-table .puzzle-tile{min-height:30px;border-width:1.5px;border-radius:10px}
+:root .puzzle-slot,:root .puzzle-drop{border-color:var(--line);border-radius:14px;background:var(--card)}
+:root .calc-prompt{background:var(--soft);border-radius:16px}
+:root .calc-part{border:0;border-radius:16px;background:var(--soft)}
+:root .calc-part.ok{background:var(--mint)}
+:root .calc-part.recall-rate{background:none}
+:root .calc-entry input:not([type="radio"]):not([type="checkbox"]),:root .calc-entry select{border:0;background-color:var(--card);min-height:48px}
+:root .calc-option{min-height:48px;border:0;border-radius:14px;background:var(--card);align-items:center}
+:root .calc-option:has(input:checked){background:var(--lavender);box-shadow:inset 0 0 0 2px var(--ink)}
+:root .recall-solution{border:0;border-radius:18px;background:var(--soft)}
+:root .recall-solution>summary,:root .why summary,:root .passage summary{min-height:44px;display:flex;align-items:center;font-weight:800;cursor:pointer}
+:root .recall-head{font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+/* rating tiles: four in a row, the face on top */
+:root .ua-dock-review{background:var(--tone)}
+:root .ua-dock-review .feedback{display:flex;flex-direction:column;margin:0}
+:root .ua-dock-review.ua-rated #feedback-result{order:-1;margin:0 0 8px;text-align:center;font-size:14px;font-weight:800;letter-spacing:0;color:var(--tone-muted)}
+:root .ua-dock-review .feedback-more{margin-top:10px}
+:root .ua-dock-review .feedback-more>summary{margin-top:0}
+:root .ua-dock-review .review-ratings{order:0}
+:root .ua-dock-review.ua-rated{display:flex;flex-direction:column}
+:root .ua-dock-review.ua-rated .feedback{display:contents}
+:root .ua-dock-review.ua-rated .feedback-more{order:2}
+:root .ua-dock-review .actions{justify-content:stretch}
+:root .ua-dock-review .actions>span{display:none}
+:root .ua-dock-review .actions .primary{flex:1}
+:root .ua-dock .review-ratings,:root .qcard .rate-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}
+:root .ua-dock button.rate-tile.rate-tile,:root .qcard button.rate-tile.rate-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:96px;margin:0;padding:8px 2px;border:2px solid var(--tile-line);border-radius:20px;background:var(--tile-bg);color:var(--ink);box-shadow:0 3px 0 var(--tile-line);text-align:center;font:inherit}
+:root .ua-dock button.rate-tile.rate-tile:hover:not(:disabled),:root .qcard button.rate-tile.rate-tile:hover:not(:disabled){background:var(--tile-bg);color:var(--ink);border-color:var(--tile-line);box-shadow:0 3px 0 var(--tile-line)}
+:root .ua-dock button.rate-tile.rate-tile:active,:root .qcard button.rate-tile.rate-tile:active{transform:translateY(2px);box-shadow:none}
+:root .rate-tile .rate-face{width:30px;height:30px;color:var(--tile-ink)}
+:root .rate-tile .rate-text{display:grid;justify-items:center;gap:1px}
+:root .rate-tile .rate-name{font-size:13px;line-height:1.12;font-weight:850;overflow-wrap:normal}
+:root .rate-tile .rate-text small{font-size:12px;font-weight:700;color:var(--tile-ink)}
+:root .rate-tile[data-rate="easy"],:root .rate-tile[data-recall-rate="Sehr einfach"]{--tile-bg:var(--lavender);--tile-line:var(--lavender-border);--tile-ink:var(--purple-text)}
+:root .review-wait{margin-top:8px}
+
+/* 8. Lesson: one slide per card */
+:root .ua-lesson{display:flex;flex-direction:column;flex:1;width:100%}
+:root .ua-lesson>#path-back{display:none}
+:root .ua-lesson>.eyebrow{margin:2px 0 4px;font-size:13px;letter-spacing:0;text-transform:none;color:var(--tone-muted)}
+:root .ua-lesson>h1{font-size:19px;line-height:1.2;letter-spacing:-.01em;margin:0 0 10px}
+:root .ua-lesson.ua-lesson-rest>h1{font-size:25px;margin-bottom:14px}
+:root .ua-lesson>.lead{color:var(--tone-muted);margin-bottom:14px}
+:root .ua-lesson .path-keys{position:relative;z-index:0;display:flex;flex-direction:column;margin-bottom:22px;padding:18px}
+:root .ua-lesson .path-keys::before,:root .ua-lesson .path-keys::after{content:"";position:absolute;z-index:-1;left:12px;right:12px;bottom:-7px;height:30px;border-radius:24px;background:var(--card);opacity:.6}
+:root .ua-lesson .path-keys::after{left:26px;right:26px;bottom:-13px;opacity:.32}
+:root .ua-lesson .path-keys>h2,:root .ua-lesson .path-keys>details.translation>summary{display:none}
+:root .ua-lesson .path-keys>.source{order:-1;margin:0 0 4px;font-size:12.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+:root .ua-lesson .path-keys h3{font-size:23px;line-height:1.15;letter-spacing:-.02em;margin:0 0 6px}
+:root .ua-lesson .path-sub{margin:10px 0 4px;font-size:13px;font-weight:800;letter-spacing:0;color:var(--muted)}
+:root .ua-lesson .path-keys .guide-points{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+:root .ua-lesson .path-keys .guide-points li{position:relative;margin:0;padding-left:20px;font-size:15.5px;line-height:1.34;font-weight:600}
+:root .ua-lesson .path-keys .guide-points li::before{content:"";position:absolute;left:2px;top:.48em;width:8px;height:8px;border-radius:3px;background:var(--tone)}
+:root .ua-lesson .path-why{margin-top:2px;font-size:13.5px;font-weight:500}
+:root .path-remember{margin:14px 0 4px;padding:12px 14px;border:0;border-radius:18px;background:var(--lavender);color:var(--ink);font-size:14.5px;line-height:1.38;font-weight:650}
+:root .path-remember b{display:block;margin-bottom:2px;font-size:12px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;color:var(--purple-text)}
+:root .ua-dock-lesson{display:flex;gap:8px;background:var(--tone)}
+:root .ua-square{flex:0 0 56px;width:56px;min-height:56px;padding:0;border-radius:20px;display:grid;place-items:center;background:var(--glass);color:var(--ink)}
+:root .ua-square:disabled{opacity:.35}
+:root .ua-toggle{flex:0 0 auto;min-height:56px;padding:0 16px;border-radius:20px;background:var(--glass);color:var(--ink);font-size:15px;font-weight:800}
+:root .ua-toggle[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+:root .ua-dock-lesson .primary{flex:1;min-width:0}
+:root .ua-lesson .path-practice .secondary{background:var(--soft)}
+:root .ua-lesson-rest .path-practice #path-start{display:none}
+:root .path-slides[open]{padding:0;background:none}
+:root .path-more>summary,:root .path-de>summary,:root .path-slides>summary,:root .path-sections>summary,:root .practice-task>summary,:root .summary-de>summary,:root .test-solution summary,:root .essay-answer>summary,:root details.translation>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:800}
+:root .practice-task>summary{padding:10px 18px;font-size:17px}
+:root .practice-task>div{padding:0 18px 18px}
+
+/* 9. Reading pages: Lernpfad list, Merkblatt, Quellen, Seminaraufgaben, Ergebnis */
+:root .sheet{max-width:720px}
+:root .sheet .panel{margin-bottom:14px}
+:root .path-list{gap:10px}
+:root .path-item{padding:12px 14px;border-radius:22px}
+:root .path-open{min-height:44px}
+:root .path-num{flex-basis:36px;height:36px;border:0;border-radius:12px;background:var(--soft);font-weight:850}
+:root .path-done .path-num{background:var(--mint);color:var(--success-text)}
+:root .path-text b{font-weight:800;line-height:1.25}
+:root .path-text small{font-weight:600}
+:root .path-bar{height:8px;background:var(--soft)}
+:root .guide-kind{border:0;background:var(--lavender);color:var(--purple-text);font-weight:800}
+:root .guide-kind-practical,:root .guide-kind-puzzle{background:var(--mint);color:var(--success-text)}
+:root .guide-kind-essay{background:var(--peach);color:var(--warm-text)}
+:root .guide-trap{border:0;border-radius:16px;background:var(--peach)}
+:root .guide-figure{border:2px solid var(--line);border-radius:18px}
+:root .scorebox{gap:18px;padding:20px;border-radius:26px;background:var(--card);color:var(--ink);box-shadow:none}
+:root .scorecircle{min-width:96px;width:96px;height:96px;border:8px solid var(--mint-border);background:none;color:var(--ink);font-size:27px;font-weight:850}
+:root .scorebox h1{font-size:25px}
+:root .scorebox p{color:var(--muted)}
+:root .results-topics{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+:root .resulttopic,:root .reviewitem{border:0;border-radius:20px;background:var(--card)}
+:root .resulttopic span{min-height:0;font-size:12.5px;font-weight:700}
+:root .reviewitem>summary{min-height:56px;border-radius:20px}
+:root .reviewitem>summary:hover{background:none}
+:root .badge{border-radius:8px;background:var(--mint);color:var(--success-text);font-weight:850}
+:root .badge.bad{background:var(--pink);color:var(--error-text)}
+:root .reviewfilter button.active,:root body[data-ua-tone] .reviewfilter .secondary.active{background:var(--ink);color:var(--paper)}
+:root body[data-ua-view="results"] main>.actions{gap:8px}
+:root body[data-ua-view="results"] .rightactions{flex-wrap:wrap;width:100%}
+:root body[data-ua-view="results"] .rightactions button{flex:1 1 220px}
+:root body[data-ua-view="results"] .sectionhead .pill{background:var(--glass)}
+:root .empty{border-radius:24px;background:var(--glass)}
+:root .course-coming{display:none}
+
+/* 10. Wide screens: header in one row, the course page in two columns, the round with the sheet next to the card */
+@media (min-width:760px){
+  :root body[data-ua-tone] .nav{flex-wrap:nowrap;gap:8px}
+  :root body[data-ua-tone] .nav-theme-group{display:contents}
+  :root body[data-ua-tone] .nav [data-view="courses"]{order:0;margin-right:8px}
+  :root body[data-ua-tone] .nav>.plain{order:1;flex:0 0 auto;padding:0 18px}
+  :root body[data-ua-tone] .nav .theme-toggle{order:2;margin-left:auto}
+  :root .ua-setup-row{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+}
+@media (min-width:900px){
+  :root .ua-home{max-width:1040px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:26px;align-items:start}
+  :root .ua-home>*{grid-column:1/-1}
+  :root .ua-home>.ua-setup{grid-column:1;grid-row:span 2}
+  :root .ua-home>.ua-pile-cards,:root .ua-home>.ua-pile-path{grid-column:2}
+  :root .ua-title{font-size:34px}
+}
+@media (min-width:1000px){
+  :root body[data-ua-view="quiz"] main,:root body[data-ua-view="review"] main{max-width:1120px}
+  :root body[data-ua-view="quiz"] .session-layout>section,:root body[data-ua-view="review"] .session-layout>section{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:26px;align-items:start;align-content:start}
+  :root body[data-ua-view="quiz"] .ua-dock,:root body[data-ua-view="review"] .ua-dock,:root body[data-ua-view="quiz"] .ua-dock:has(.feedback-more[open]),:root body[data-ua-view="review"] .ua-dock:has(.feedback-more[open]){position:sticky;top:calc(66px + env(safe-area-inset-top));bottom:auto;margin:4px 0 0;padding:22px;border-radius:30px;box-shadow:none}
+  :root body[data-ua-view="quiz"] .ua-dock:not(.ua-ok):not(.ua-no),:root body[data-ua-view="review"] .ua-dock{background:var(--glass)}
+  :root body[data-ua-view="quiz"] .ua-dock:has(.feedback-more[open]){max-height:calc(100vh - 90px);overflow:auto}
+  :root body[data-ua-view="quiz"] .qcard,:root body[data-ua-view="review"] .qcard{padding:26px}
+  :root body[data-ua-view="quiz"] .stem,:root body[data-ua-view="review"] .stem{font-size:27px;line-height:1.2}
+  :root .ua-verdict h3{font-size:25px}
+  :root .ua-keys{display:block;margin:14px 0 0;font-size:13.5px;font-weight:700;color:var(--tone-muted)}
+  :root .ua-ok .ua-keys,:root .ua-no .ua-keys{color:inherit}
+  :root .ua-keys kbd{display:inline-grid;place-items:center;min-width:26px;height:26px;margin:0 2px;padding:0 7px;border-radius:8px;background:var(--glass);font:inherit;font-weight:850;color:var(--ink)}
+}
+@media (max-width:359px){
+  :root .rate-tile .rate-name{font-size:12px}
+  :root body[data-ua-tone] .nav>.plain{font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){:root *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+}
+@media print{.ua-run-top,.ua-dock .actions,.ua-hub-tools,.ua-ablage,.ua-snack,.ua-overlay,.ua-extras,.ua-scrim{display:none!important}.ua-off{display:none!important}}
+</style>
 </head>
 <body>
 <header><div class="wrap bar"><div class="brand"><span class="mark" aria-hidden="true"></span><div><b>Lernraum</b><small id="course-subtitle">Dein Lernraum</small></div></div><label class="language-control" title="Bedienung und zusätzliche Erklärungen. Fragen bleiben auf Englisch."><span class="sr-only" data-preserve-language>Sprache / Lingua</span><select id="language-select" aria-label="Sprache / Lingua" data-preserve-language><option value="de">Deutsch</option><option value="it">Italiano</option></select></label><nav class="nav" aria-label="Hauptnavigation"><span class="nav-theme-group"><button class="plain" data-view="courses">Fächer</button><button type="button" id="theme-toggle" class="theme-toggle" role="switch" aria-label="Darkmode" aria-checked="false" title="Zum dunklen Design wechseln"><span class="theme-track" aria-hidden="true"><span class="theme-thumb"><svg class="theme-sun" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3.3"/><path d="M10 1v2m0 14v2M1 10h2m14 0h2M3.6 3.6 5 5m10 10 1.4 1.4M3.6 16.4 5 15M15 5l1.4-1.4"/></svg><svg class="theme-moon" viewBox="0 0 20 20"><path d="M16.9 12.2A7.3 7.3 0 0 1 7.8 3.1a7.3 7.3 0 1 0 9.1 9.1Z"/></svg></span></span></button></span><button class="plain" data-course-nav data-view="home" hidden>Training</button><button class="plain" data-course-nav data-view="guide" hidden>Merkblatt</button><button class="plain" data-course-nav data-view="sources" hidden>Quellen</button></nav></div></header><div class="wrap pwa-wrap"><div id="pwa-alert" class="pwa-alert"><span id="pwa-status" role="status" aria-live="polite">Offline-Version wird vorbereitet …</span></div></div>
@@ -1798,6 +2298,361 @@ function startLecturerExam(mixed=false){
  if(items.length)startReview(mixed?shuffled(items):items);
 }
 document.addEventListener('click',event=>{if(event.target.closest?.('#lecturer-exam'))startLecturerExam();else if(event.target.closest?.('#lecturer-exam-shuffle'))startLecturerExam(true);});
+// UI "Stapel" (Konzept A, 2026-11-12). build.mjs inserts this block after calc-extension.js at the top of the trainer
+// script; the styles are in ui-stapel.css. It changes how the trainer looks and where things sit, not what they do:
+// every render function still runs and keeps its ids, classes and handlers, then the block below moves the rendered
+// parts into the new layout (one card per screen, the next step as one big button at the bottom, the subject colours
+// the whole screen). Only the course list is drawn anew, because it also holds the new "Ablage" for hidden courses.
+// New data on the device: UA_HIDDEN_KEY (ids of hidden courses) and UA_LAST_KEY (the course opened last). The storage
+// keys of the courses and of the card decks are not touched, so hiding a course never changes its progress.
+const UA_HIDDEN_KEY='lernraum-hidden-courses-v1',UA_LAST_KEY='lernraum-last-course-v1';
+// Colour of a course: its tone from the course data; two courses share a tone with another one and get their own here.
+const UA_TONE_BY_COURSE={'international-finance':'teal','tourism-marketing':'sand'};
+const uaTone=course=>UA_TONE_BY_COURSE[course.id]||course.tone||'lavender';
+const UA_ICON={
+ play:'<svg class="ua-ic ua-fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6a.7.7 0 0 0 1.1.6l10.6-6.8a.7.7 0 0 0 0-1.2L9.1 4.6a.7.7 0 0 0-1.1.6z"/></svg>',
+ x:'<svg class="ua-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
+ left:'<svg class="ua-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>',
+ down:'<svg class="ua-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"/></svg>',
+ arrow:'<svg class="ua-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+};
+let uaSeq=0,uaEdit=false,uaSlides={id:null,step:0,de:false},uaSnackTimer=null;
+function uaList(key){try{const value=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(value)?value.filter(id=>typeof id==='string'):[];}catch{return [];}}
+function uaStore(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{}}
+function uaHidden(){return uaList(UA_HIDDEN_KEY).filter(id=>COURSES.some(course=>course.id===id));}
+function uaLast(){try{return localStorage.getItem(UA_LAST_KEY)||'';}catch{return '';}}
+// Order of the stack: the course opened last on top, the others in a fixed order (newest course first).
+function uaOrder(){const last=uaLast(),rest=[...COURSES].reverse();return [...rest.filter(course=>course.id===last),...rest.filter(course=>course.id!==last)];}
+
+// Every wrapped view ends here: the body carries the view and the course colour, the browser bar follows the page colour.
+function uaChrome(name){
+ uaSeq++;
+ if(name!=='courses')uaEdit=false;
+ const body=document.body,toned=activeCourse&&name!=='courses'&&name!=='intro';
+ body.dataset.uaView=name;
+ if(toned)body.dataset.uaTone=uaTone(activeCourse);else delete body.dataset.uaTone;
+ uaThemeColor();
+}
+function uaThemeColor(){const meta=document.querySelector('meta[name="theme-color"]');if(meta&&document.body)meta.setAttribute('content',getComputedStyle(document.body).backgroundColor);}
+if(typeof MutationObserver==='function')new MutationObserver(uaThemeColor).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+// A view function may hand over to another view (quiz() without a round goes home); then that view has done the chrome.
+function uaWrap(base,name,after){return function(...args){const seq=uaSeq,result=base.apply(this,args);if(uaSeq===seq){after?.();uaChrome(name);}return result;};}
+
+// ---- Course list: the stack, hiding courses ("Ablage") ----
+function uaCourseInfo(course){
+ const state=storageRead(course),progress=state.progress||{},done=Object.entries(progress).filter(([id,item])=>!id.startsWith('puzzle:')&&item.attempts>0).length,now=Date.now();
+ let deck=null;try{const saved=JSON.parse(localStorage.getItem(storageKey(course)+'::review')||'null');if(saved&&Array.isArray(saved.deck)&&saved.cards&&saved.deck.length)deck=saved;}catch{}
+ const cards=deck?{due:deck.deck.filter(id=>deck.cards[id]&&deck.cards[id].due<=now).length,fresh:deck.deck.filter(id=>!deck.cards[id]).length}:course.lecturerExam?{due:0,fresh:course.lecturerExam.ids.length}:null;
+ const lessons=course.learningPath?.lessons||[],passed=lessons.map(lesson=>{const ids=[...(lesson.questionIds||[]),...(lesson.puzzleIds||[]).map(id=>'puzzle:'+id)];return ids.length>0&&ids.filter(id=>progress[id]?.lastCorrect).length/ids.length>=0.8;});
+ const next=lessons.length?Math.max(0,passed.indexOf(false)):-1,running=state.session&&!state.session.completed?state.session:null;
+ return {done,total:course.questions.length,cards,lessons:lessons.length,next,allPassed:lessons.length>0&&!passed.includes(false),running};
+}
+function uaCard(course,open){
+ const info=uaCourseInfo(course),name=esc(course.title),tone=esc(uaTone(course)),status=esc(course.statusLabel||`${info.total} Fragen`);
+ const head=`class="course-card ua-card${open?' ua-open':''} ${esc(course.id)}" data-course="${esc(course.id)}" data-tone="${esc(course.tone||'lavender')}" data-ua-tone="${tone}"`,icon=`<span class="course-icon" aria-hidden="true">${esc(course.icon||'📚')}</span>`,away=`<button type="button" class="ua-away" data-ua-hide="${esc(course.id)}" aria-label="${name} in die Ablage legen">Ablegen</button>`;
+ if(!open)return `<article ${head}><button type="button" class="ua-card-main">${icon}<span class="ua-card-text"><b class="course-name">${name}</b>&nbsp;· <span class="course-status">${status}</span></span></button><button type="button" class="ua-play" data-ua-quick="${esc(course.id)}" aria-label="Abfrage starten: ${name}">${UA_ICON.play}</button>${away}</article>`;
+ const quick=info.running?`Runde fortsetzen<small>Frage ${info.running.current+1} von ${info.running.ids.length}</small>`:`Abfragen<small>20 Aufgaben · gemischt · Lernen</small>`;
+ const cards=info.cards?`<button type="button" class="ua-btn ua-glass" data-ua-cards="${esc(course.id)}"><span>Karten<small>${info.cards.due} fällig · ${info.cards.fresh} neu</small></span></button>`:'';
+ const path=info.lessons?`<button type="button" class="ua-btn ua-glass" data-ua-path="${esc(course.id)}"><span>Lernpfad<small>${info.allPassed?`alle ${info.lessons} Lektionen geschafft`:`Lektion ${info.next+1} von ${info.lessons}`}</small></span></button>`:'';
+ return `<article ${head}><div class="ua-open-top">${course.statusLabel?`<span class="ua-chip course-status">${esc(course.statusLabel)}</span>`:'<span></span>'}<span class="course-meta">${info.total} Fragen · ${info.done} bearbeitet</span></div><button type="button" class="ua-card-main">${icon}<b class="course-name">${name}</b></button><button type="button" class="ua-btn ua-primary" data-ua-quick="${esc(course.id)}"><span>${quick}</span><span class="ua-play">${UA_ICON.play}</span></button>${cards||path?`<div class="ua-open-two">${cards}${path}</div>`:''}</article>`;
+}
+function uaHub(){
+ const hidden=new Set(uaHidden()),order=uaOrder(),shown=order.filter(course=>!hidden.has(course.id)),away=order.filter(course=>hidden.has(course.id));
+ app.innerHTML=`<section class="course-hub ua-hub${uaEdit?' ua-editing':''}"><h1 class="sr-only">Deine Fächer</h1>${shown.length?`<div class="ua-stack">${shown.map((course,i)=>uaCard(course,i===0&&!uaEdit)).join('')}</div>`:'<p class="ua-empty">Alle Fächer liegen in der Ablage. Hol dir eines zurück.</p>'}${uaEdit?'<p class="ua-tip"><b>Ablegen</b> blendet ein Fach nur aus. Der Fortschritt bleibt gespeichert, und in der Ablage holst du es jederzeit zurück.</p>':''}${away.length?`<button type="button" class="ua-ablage" id="ua-ablage" aria-haspopup="dialog"><span class="ua-ablage-edges" aria-hidden="true">${away.slice(0,3).map(course=>`<i data-ua-tone="${esc(uaTone(course))}"></i>`).join('')}</span><span class="ua-ablage-text">Ablage<small>${away.length} ${away.length===1?'Fach':'Fächer'} · Fortschritt bleibt gespeichert</small></span>${UA_ICON.down}</button>`:''}<div class="ua-hub-tools">${shown.length?`<button type="button" class="ua-ghost" id="ua-edit" aria-pressed="${uaEdit}">${uaEdit?'Fertig':'Fächer ordnen'}</button>`:''}<button type="button" class="ua-ghost" id="replay-intro">Einführung ansehen</button></div></section>`;
+ app.querySelectorAll('.ua-card').forEach(card=>{
+  const id=card.dataset.course;
+  card.addEventListener('click',event=>{
+   if(event.target.closest('[data-ua-hide]')){uaHide(id);return;}
+   if(card.classList.contains('ua-swiped')){card.classList.remove('ua-swiped');return;}
+   if(event.target.closest('[data-ua-quick]')){uaQuick(id);return;}
+   if(event.target.closest('[data-ua-cards]')){uaCards(id);return;}
+   if(event.target.closest('[data-ua-path]')){uaPath(id);return;}
+   chooseCourse(id);
+  });
+  // Touch: a swipe to the left uncovers "Ablegen"; the tap on it is the second step, so nothing vanishes by accident.
+  let x0=null,y0=0;
+  card.addEventListener('touchstart',event=>{const t=event.touches[0];x0=t.clientX;y0=t.clientY;},{passive:true});
+  card.addEventListener('touchmove',event=>{if(x0===null||uaEdit)return;const t=event.touches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)<36||Math.abs(dx)<Math.abs(dy)*1.5)return;app.querySelectorAll('.ua-swiped').forEach(other=>{if(other!==card)other.classList.remove('ua-swiped');});card.classList.toggle('ua-swiped',dx<0);x0=null;},{passive:true});
+  card.addEventListener('touchend',()=>{x0=null;},{passive:true});
+ });
+ document.getElementById('ua-edit')?.addEventListener('click',()=>{uaEdit=!uaEdit;courseHub();document.getElementById('ua-edit')?.focus({preventScroll:true});});
+ document.getElementById('ua-ablage')?.addEventListener('click',uaAblage);
+ document.getElementById('replay-intro').addEventListener('click',startIntro);
+}
+function uaHide(id){
+ const course=COURSES.find(item=>item.id===id),list=uaHidden();if(!course)return;
+ if(!list.includes(id))uaStore(UA_HIDDEN_KEY,[...list,id]);
+ courseHub();
+ uaSnack(`${course.title} liegt in der Ablage. Der Fortschritt bleibt gespeichert.`,'Rückgängig',()=>uaShow(id));
+}
+function uaShow(id){uaStore(UA_HIDDEN_KEY,uaHidden().filter(item=>item!==id));if(view==='courses')courseHub();}
+// The hidden courses with their progress; "Zurückholen" puts one back on the stack.
+function uaAblage(){
+ const trigger=document.activeElement,overlay=document.createElement('div');overlay.className='ua-overlay';
+ document.querySelector('.ua-snack')?.remove();
+ const close=()=>{overlay.remove();const again=document.getElementById('ua-ablage')||(trigger?.isConnected?trigger:null);again?.focus({preventScroll:true});};
+ const draw=()=>{
+  const hidden=new Set(uaHidden()),away=uaOrder().filter(course=>hidden.has(course.id));
+  if(!away.length){close();return;}
+  overlay.innerHTML=`<section class="panel ua-sheet" role="dialog" aria-modal="true" aria-labelledby="ua-ablage-title"><div class="ua-sheet-head"><h2 id="ua-ablage-title">Ablage</h2><p>${away.length} ${away.length===1?'Fach':'Fächer'} · Fortschritt bleibt gespeichert</p></div><div class="ua-ablage-list">${away.map(course=>{const info=uaCourseInfo(course);return `<div class="ua-ablage-row" data-ua-tone="${esc(uaTone(course))}"><p><b>${esc(course.title)}</b><small>${info.done} von ${info.total} Fragen bearbeitet</small></p><button type="button" data-ua-show="${esc(course.id)}">Zurückholen</button></div>`;}).join('')}</div><button type="button" class="secondary full" data-ua-close>Schließen</button></section>`;
+  overlay.querySelectorAll('[data-ua-show]').forEach(button=>button.addEventListener('click',()=>{uaShow(button.dataset.uaShow);draw();}));
+  overlay.querySelector('[data-ua-close]').addEventListener('click',close);
+  overlay.querySelector('[data-ua-show]')?.focus({preventScroll:true});
+ };
+ overlay.addEventListener('click',event=>{if(event.target===overlay)close();});
+ overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();close();}if(event.key==='Tab'){const items=[...overlay.querySelectorAll('button')],i=items.indexOf(document.activeElement);event.preventDefault();items[(i+(event.shiftKey?-1:1)+items.length)%items.length]?.focus();}});
+ document.body.appendChild(overlay);draw();
+}
+function uaSnack(text,label,action){
+ document.querySelector('.ua-snack')?.remove();clearTimeout(uaSnackTimer);
+ const bar=document.createElement('div');bar.className='ua-snack';bar.setAttribute('role','status');
+ bar.innerHTML=`<span>${esc(text)}</span>${label?`<button type="button">${esc(label)}</button>`:''}`;
+ bar.querySelector('button')?.addEventListener('click',()=>{bar.remove();action?.();});
+ document.body.appendChild(bar);uaSnackTimer=setTimeout(()=>bar.remove(),7000);
+}
+// One tap from the course list into a round: a running round continues, otherwise 20 mixed tasks in learn mode.
+// It draws the course page first, because the pool functions read the course's own preselection from its form.
+function uaQuick(id){
+ if(!activateCourse(id))return;
+ if(session&&!session.completed){go('quiz');return;}
+ view='home';render();
+ const type=itemType(),pools=roundPools(lectureChoiceActive()?'all':null),plan=roundPlan(pools.mc.length,pools.pz.length,'20',type,'learn');
+ if(!plan.mc&&!plan.puzzles){window.scrollTo({top:0,behavior:'instant'});toast('Keine passenden Fragen. Bitte Auswahl ändern.');return;}
+ start(mixItems(pickQuestions(pools.mc,plan.mc,'mixed'),balancedPick(pools.pz,plan.puzzles),'mixed'),'learn');
+}
+function uaCards(id){
+ if(!activateCourse(id))return;
+ if(reviewLoad()?.deck?.filter(item=>byId[item]).length){review=null;go('review');}
+ else if(activeCourse.lecturerExam)startLecturerExam();
+ else go('home');
+}
+function uaPath(id){
+ if(!activateCourse(id))return;
+ const lessons=activeCourse.learningPath?.lessons||[],next=lessons.find(lesson=>!pathStatus(lesson).passed);
+ pathLesson=next?.id||null;go(lessons.length?'path':'home');
+}
+
+// ---- Course page: three piles instead of the long form ----
+function uaHome(){
+ const c=activeCourse,form=document.getElementById('setup'),layout=app.querySelector('.layout');
+ if(!c||!form||!layout)return;
+ const {done,wrong}=counts(),page=document.createElement('div');page.className='ua-home';
+ page.innerHTML=`<header class="ua-home-head"><h1 class="ua-title">${esc(c.title)}</h1><p class="ua-stats">${c.statusLabel?`<span class="ua-chip">${esc(c.statusLabel)}</span>`:''}<span>${done} von ${QUESTIONS.length} Fragen bearbeitet</span>${wrong?`<span>${wrong} zu wiederholen</span>`:''}</p></header>`;
+ app.querySelectorAll(':scope > .banner').forEach(banner=>page.append(banner));
+
+ // Pile 1 "Abfragen": the form itself. Amount as four buttons, then mode and topic; the rest of the form and the line
+ // that counts the matching tasks wait behind "Mehr Auswahl".
+ const puzzles=c.puzzleItems?.length||0,title=form.querySelector(':scope > h2'),amount=document.getElementById('amount'),topic=document.getElementById('topic'),segment=form.querySelector(':scope > .segment'),submit=form.querySelector('button[type="submit"]'),available=document.getElementById('available');
+ form.classList.add('ua-pile','ua-setup');
+ if(title)title.textContent='Abfragen';
+ const sub=document.createElement('p');sub.className='ua-pile-sub';sub.textContent=`${QUESTIONS.length} Fragen${puzzles?` · ${puzzles} ${hasCalc()?'Rechenaufgaben und Puzzles':'Puzzles'}`:''}`;
+ const more=document.createElement('details');more.className='ua-more';more.innerHTML='<summary>Mehr Auswahl</summary>';
+ [...form.children].forEach(el=>{if(el!==title)more.append(el);});
+ if(segment?.previousElementSibling?.matches('.label'))segment.previousElementSibling.classList.add('ua-off');
+ const amounts=document.createElement('div');amounts.className='ua-seg';amounts.setAttribute('role','group');amounts.setAttribute('aria-label','Umfang der Runde');
+ amounts.innerHTML=[...amount.options].map(option=>`<button type="button" data-ua-amount="${esc(option.value)}">${option.value==='all'?'Alle':esc(option.value)}</button>`).join('');
+ amounts.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>{amount.value=button.dataset.uaAmount;amount.dispatchEvent(new Event('change',{bubbles:true}));}));
+ const row=document.createElement('div');row.className='ua-setup-row';
+ if(segment)row.append(segment);
+ if(topic)row.append(topic);
+ if(submit)submit.innerHTML=`${UA_ICON.play}<span class="ua-label">Training starten</span>`;
+ form.append(sub,amounts,row);
+ if(submit)form.append(submit);
+ form.append(more);
+ if(available)more.querySelector('summary').after(available);
+ more.querySelectorAll('label[for="amount"],#amount,label[for="topic"]').forEach(el=>el.classList.add('ua-off'));
+ const resume=document.getElementById('review-resume');
+ page.append(form);
+
+ // Pile 2 "Karteikarten": the saved deck, the deck of the released questions, or a new deck from the questions.
+ const saved=reviewLoad(),now=Date.now(),deck=(saved?.deck||[]).filter(id=>byId[id]),cards=document.createElement('section');cards.className='panel ua-pile ua-pile-cards';
+ const due=deck.filter(id=>saved.cards[id]&&saved.cards[id].due<=now).length,fresh=deck.filter(id=>!saved.cards[id]).length,later=deck.length-due-fresh;
+ cards.innerHTML=`<h2>Karteikarten</h2>${deck.length?`<p class="ua-counts"><span class="ua-count-due">${due} fällig</span><span class="ua-count-new">${fresh} neu</span><span class="ua-count-later">${later} später</span></p>`:'<p class="ua-pile-sub">Wie bei Anki: Jede Karte kommt wieder, wenn sie dran ist.</p>'}<div class="ua-pile-actions"></div>`;
+ const cardActions=cards.querySelector('.ua-pile-actions');
+ if(resume){resume.classList.remove('full');cardActions.append(resume);}
+ ['lecturer-exam','lecturer-exam-shuffle'].forEach(id=>{const button=document.getElementById(id);if(button){button.classList.remove('full');cardActions.append(button);}});
+ if(!c.lecturerExam){const fromQuestions=document.createElement('button');fromQuestions.type='button';fromQuestions.className='secondary';fromQuestions.id='ua-review-start';fromQuestions.textContent=deck.length?'Neuen Stapel aus den Fragen wählen':'Karteikarten aus den Fragen starten';fromQuestions.addEventListener('click',()=>{const radio=form.querySelector('input[name="mode"][value="review"]');if(radio){radio.checked=true;radio.dispatchEvent(new Event('change',{bubbles:true}));}submit?.click();});cardActions.append(fromQuestions);}
+ [...cardActions.querySelectorAll('button')].forEach((button,i)=>{button.classList.toggle('primary',i===0);button.classList.toggle('secondary',i>0);});
+ page.append(cards);
+
+ // Pile 3 "Lernpfad": the next lesson that is not passed yet.
+ const lessons=c.learningPath?.lessons||[],openPath=document.getElementById('open-path');
+ if(lessons.length){
+  const states=lessons.map(pathStatus),passed=states.filter(state=>state.passed).length,at=Math.max(0,states.findIndex(state=>!state.passed)),next=lessons[at],path=document.createElement('section');path.className='panel ua-pile ua-pile-path';
+  path.innerHTML=`<div class="ua-pile-line"><div><h2>Lernpfad <span>${passed===lessons.length?'alles geschafft':`Lektion ${at+1} von ${lessons.length}`}</span></h2><p class="ua-pile-title"${next.en?' lang="en" data-preserve-language':''}>${esc(next.en?.title||next.title)}</p><div class="ua-bar" role="img" aria-label="${passed} von ${lessons.length} Lektionen geschafft"><i style="width:${Math.round(passed/lessons.length*100)}%"></i></div></div><button type="button" class="ua-play ua-play-big" id="ua-next-lesson" aria-label="Lektion ${at+1} öffnen">${UA_ICON.play}</button></div><div class="ua-pile-actions"></div>`;
+  path.querySelector('#ua-next-lesson').addEventListener('click',()=>{pathLesson=next.id;go('path');});
+  if(openPath){openPath.classList.remove('full');openPath.classList.replace('primary','secondary');path.querySelector('.ua-pile-actions').append(openPath);}
+  page.append(path);
+ }
+ app.querySelector(':scope > .path-teaser')?.classList.add('ua-off');
+
+ // Below the piles: mock test, Merkblatt, seminar tasks; the long texts of the course wait behind one line.
+ const extras=document.createElement('div');extras.className='ua-extras';
+ const mock=document.getElementById('mock-exam'),practical=document.getElementById('open-practical'),guideButton=document.createElement('button');
+ guideButton.type='button';guideButton.className='secondary';guideButton.id='ua-open-guide';guideButton.textContent='Merkblatt';guideButton.addEventListener('click',()=>go('guide'));
+ if(mock){mock.classList.remove('full');mock.classList.replace('primary','secondary');extras.append(mock);}
+ extras.append(guideButton);
+ if(practical){practical.classList.remove('full');extras.append(practical);}
+ const sourcesButton=document.createElement('button');sourcesButton.type='button';sourcesButton.className='secondary';sourcesButton.id='ua-open-sources';sourcesButton.textContent='Quellen';sourcesButton.addEventListener('click',()=>go('sources'));extras.append(sourcesButton);
+ page.append(extras);
+ const info=document.createElement('details');info.className='ua-info';info.innerHTML='<summary>Über dieses Fach und alle Themen</summary>';
+ const right=layout.querySelector(':scope > section');
+ if(right)[...right.children].forEach(el=>info.append(el));
+ page.append(info);
+ layout.remove();
+ app.querySelector(':scope > .intro')?.classList.add('ua-off');
+ app.prepend(page);
+ uaSetup();
+}
+// Keeps the amount buttons and the label of the start button in step with the form (available() runs on every change).
+function uaSetup(){
+ const form=document.getElementById('setup');if(!form?.classList.contains('ua-setup'))return;
+ const amount=document.getElementById('amount'),label=form.querySelector('button[type="submit"] .ua-label'),found=/Diese Runde: (\d+)/.exec(document.getElementById('available')?.textContent||''),n=found?Number(found[1]):0,cards=selectedMode()==='review';
+ form.querySelectorAll('[data-ua-amount]').forEach(button=>{const on=button.dataset.uaAmount===amount?.value;button.classList.toggle('on',on);button.setAttribute('aria-pressed',String(on));});
+ const text=lectureChoiceActive()?(cards?'Karteikarten wählen':'Runde starten'):n?`${n} ${cards?(n===1?'Karte':'Karten'):(n===1?'Aufgabe':'Aufgaben')} starten`:'Training starten';
+ if(label&&label.textContent!==text)label.textContent=text;
+}
+
+// ---- Round: bar on top, the card, the sheet with the next step at the bottom ----
+function uaTopBar(html,label){
+ const top=document.createElement('div');top.className='ua-run-top';
+ top.innerHTML=`<button type="button" class="ua-round" id="ua-pause" aria-label="${esc(label)}">${UA_ICON.x}</button>${html}`;
+ top.querySelector('#ua-pause').addEventListener('click',()=>document.getElementById('pause')?.click());
+ app.prepend(top);return top;
+}
+function uaQuiz(){
+ const card=app.querySelector('.qcard'),section=card?.parentElement,layout=app.querySelector('.session-layout'),side=app.querySelector('aside.side');
+ if(!session||!card||!section||!layout)return;
+ const ids=session.ids,n=ids.length,cur=session.current,learn=session.mode==='learn',q=byId[ids[cur]],selected=session.answers[q.id];
+ const state=id=>learn&&session.submitted[id]?(session.answers[id]===byId[id].correct?'ok':'no'):session.answers[id]!==undefined?'answered':'';
+ const done=ids.filter(id=>learn?session.submitted[id]:session.answers[id]!==undefined).length;
+ const progress=n<=30?`<div class="ua-segs" role="img" aria-label="Frage ${cur+1} von ${n}, ${done} ${learn?'geprüft':'beantwortet'}">${ids.map((id,i)=>`<i class="${i===cur?'now':state(id)}"></i>`).join('')}</div>`:`<div class="ua-meter" role="img" aria-label="Frage ${cur+1} von ${n}, ${done} ${learn?'geprüft':'beantwortet'}"><i style="width:${(cur+1)/n*100}%"></i></div>`;
+ const top=uaTopBar(`${progress}<button type="button" class="ua-count" id="ua-overview" aria-expanded="false" aria-label="Übersicht: alle ${n} Fragen dieser Runde">${cur+1} / ${n}</button>`,'Runde pausieren und zur Fachseite');
+ // The question grid ("Deine Fragen") opens as a sheet from the counter.
+ if(side){
+  const scrim=document.createElement('div');scrim.className='ua-scrim';layout.append(scrim);
+  const toggle=open=>{layout.classList.toggle('ua-side-open',open);top.querySelector('#ua-overview').setAttribute('aria-expanded',String(open));if(open)side.querySelector('.qdot.current')?.focus({preventScroll:true});};
+  top.querySelector('#ua-overview').addEventListener('click',()=>toggle(!layout.classList.contains('ua-side-open')));
+  scrim.addEventListener('click',()=>toggle(false));
+  if(!side.querySelector('.ua-side-close')){const close=document.createElement('button');close.type='button';close.className='secondary full ua-side-close';close.textContent='Schließen';close.addEventListener('click',()=>toggle(false));side.append(close);}
+ }
+ // Fewer labels on the card: the topic first, the default labels go.
+ const meta=card.querySelector(':scope > .meta');
+ if(meta&&!q.puzzle){
+  meta.querySelectorAll('.pill').forEach(pill=>{if(['Genau eine Antwort','Angelehnt an die Unterlagen',q.level].includes(pill.textContent.trim()))pill.classList.add('ua-off');});
+  meta.insertAdjacentHTML('afterbegin',`<span class="ua-chip">${esc(TOPICS[q.topic]?.short||'')}</span>${learn?'':'<span class="ua-chip">Test</span>'}`);
+ }
+ // The sheet: the result (if checked) and the buttons leave the card and stay at the bottom of the screen.
+ const dock=document.createElement('div'),result=card.querySelector(':scope > .feedback'),actions=card.querySelector(':scope > .actions');dock.className='ua-dock';
+ if(result){
+  const ok=selected===q.correct,headline=result.querySelector('#feedback-result');
+  dock.classList.add(ok?'ua-ok':'ua-no');
+  if(headline){
+   const row=document.createElement('div');row.className='ua-verdict';headline.before(row);
+   row.innerHTML=`<span class="ua-face" aria-hidden="true">${rateFace(ok?'good':'hard')}</span>`;row.append(headline);
+   if(!q.puzzle&&!ok){
+    const letter='ABCDEFGHIJKL'[session.order[q.id].indexOf(q.correct)],english=!!q.explanationEn,why=selected===undefined?'':(english?q.wrongExplanationsEn:q.wrongExplanations)?.[selected];
+    if(letter)row.insertAdjacentHTML('beforeend',`<span class="ua-right-is">richtig ist ${letter}</span>`);
+    if(why)row.insertAdjacentHTML('afterend',`<p class="ua-why"${english?' lang="en"':''}>${esc(why.replace(/^(Wrong choice|Falsch gewählt):\s*/,''))}</p>`);
+   }
+  }
+  dock.append(result);
+ }
+ if(actions)dock.append(actions);
+ // wide screens with a keyboard: the keys stand under the buttons (ui-stapel.css shows the line from 1000 px on)
+ if(!q.puzzle)dock.insertAdjacentHTML('beforeend',`<p class="ua-keys" aria-hidden="true"><kbd>A</kbd>–<kbd>${'ABCDEFGHIJKL'[q.options.length-1]}</kbd> wählen <kbd>↵</kbd> ${learn?'prüfen und weiter':'weiter'}</p>`);
+ section.append(dock);
+}
+function uaReview(){
+ const card=app.querySelector('.qcard'),section=card?.parentElement;
+ if(!review)return;
+ const counts=reviewCounts();
+ uaTopBar(`<p class="ua-counts" aria-label="Karteikarten"><span class="ua-count-due">${counts.due} fällig</span><span class="ua-count-new">${counts.fresh} neu</span><span class="ua-count-later">${counts.later} später</span></p>`,'Karteikarten pausieren und zur Fachseite');
+ if(!card||!section)return;
+ const dock=document.createElement('div'),reveal=card.querySelector('[data-recall-reveal]'),ratings=card.querySelector(':scope > .review-ratings'),actions=card.querySelector(':scope > .actions'),result=card.querySelector(':scope > .feedback');dock.className='ua-dock ua-dock-review';
+ if(result){dock.classList.add('ua-rated');dock.append(result);}
+ if(ratings)dock.append(ratings);
+ if(reveal){reveal.classList.add('full');dock.append(reveal);}
+ else if(actions)dock.append(actions);
+ if(dock.children.length)section.append(dock);
+}
+
+// ---- Lesson: one slide per card, turn the pages instead of scrolling ----
+function uaLesson(){
+ const sheet=app.querySelector('.path-sheet'),keys=sheet?.querySelector(':scope > .path-keys'),back=document.getElementById('path-back');
+ if(!sheet||!back)return;
+ sheet.classList.add('ua-lesson');
+ const groups=[],german=[],translation=keys?.querySelector(':scope > details.translation');
+ if(keys){let group=null;[...keys.children].forEach(el=>{if(el===translation||el.matches('h2'))return;if(el.matches('h3')){group=[];groups.push(group);}group?.push(el);});}
+ if(translation){let group=null;[...translation.children].forEach(el=>{if(el.matches('summary'))return;if(el.matches('h3')){group=[];german.push(group);}group?.push(el);});}
+ const n=groups.length,lessonId=pathLesson;
+ if(uaSlides.id!==lessonId)uaSlides={id:lessonId,step:0,de:false};
+ uaSlides.step=Math.max(0,Math.min(uaSlides.step,n));
+ const top=document.createElement('div');top.className='ua-run-top';
+ top.innerHTML=`<button type="button" class="ua-round" id="ua-pause" aria-label="Lektion schließen, zurück zum Lernpfad">${UA_ICON.x}</button>${n?`<div class="ua-segs ua-segs-wide" role="img"></div><span class="ua-count" id="ua-step"></span>`:''}`;
+ top.querySelector('#ua-pause').addEventListener('click',()=>back.click());
+ app.prepend(top);
+ if(!n)return;
+ const dock=document.createElement('div');dock.className='ua-dock ua-dock-lesson';
+ dock.innerHTML=`<button type="button" class="ua-square" id="ua-prev" aria-label="Zurück">${UA_ICON.left}</button>${german.length===n?'<button type="button" class="ua-toggle" id="ua-de" aria-pressed="false">Auf Deutsch</button>':''}<button type="button" class="primary" id="ua-next"><span></span>${UA_ICON.arrow}</button>`;
+ sheet.append(dock);
+ const rest=[...sheet.children].filter(el=>el!==keys&&el!==dock&&el!==back&&!el.matches('.eyebrow,h1'));
+ const show=()=>{
+  const step=uaSlides.step,practice=step===n,de=uaSlides.de&&german.length===n;
+  sheet.classList.toggle('ua-lesson-rest',practice);
+  keys.classList.toggle('ua-off',practice);
+  rest.forEach(el=>el.classList.toggle('ua-off',!practice));
+  groups.forEach((group,i)=>group.forEach(el=>el.classList.toggle('ua-off',i!==step||(de&&!el.matches('.source')))));
+  german.forEach((group,i)=>group.forEach(el=>el.classList.toggle('ua-off',i!==step||!de)));
+  if(translation){translation.open=de&&!practice;translation.classList.toggle('ua-off',!de||practice);}
+  top.querySelector('.ua-segs').innerHTML=Array.from({length:n+1},(_,i)=>`<i class="${i<step?'ok':i===step?'now':''}"></i>`).join('');
+  top.querySelector('.ua-segs').setAttribute('aria-label',practice?'Alle Folien gelesen, jetzt üben':`Folie ${step+1} von ${n}`);
+  top.querySelector('#ua-step').textContent=practice?'Üben':`Folie ${step+1} / ${n}`;
+  dock.querySelector('#ua-prev').disabled=step===0;
+  const start=document.getElementById('path-start');
+  dock.querySelector('#ua-next').disabled=practice&&(!start||start.disabled);
+  dock.querySelector('#ua-next span').textContent=practice?'Übungen starten':step===n-1?'Zum Üben':'Weiter';
+  const toggle=dock.querySelector('#ua-de');if(toggle){toggle.classList.toggle('ua-off',practice);toggle.setAttribute('aria-pressed',String(de));toggle.textContent=de?'In English':'Auf Deutsch';}
+ };
+ const turn=step=>{uaSlides.step=Math.max(0,Math.min(step,n));show();window.scrollTo({top:0,behavior:'instant'});};
+ dock.querySelector('#ua-prev').addEventListener('click',()=>turn(uaSlides.step-1));
+ dock.querySelector('#ua-next').addEventListener('click',()=>{if(uaSlides.step===n)document.getElementById('path-start')?.click();else turn(uaSlides.step+1);});
+ dock.querySelector('#ua-de')?.addEventListener('click',()=>{uaSlides.de=!uaSlides.de;show();});
+ show();
+}
+
+// ---- Hooks ----
+const uaBase={courseHub,home,quiz,reviewView,results,guide,practice,pathView,lessonView,sources,onboarding,available,activateCourse};
+courseHub=function(){uaHub();uaChrome('courses');};
+home=uaWrap(uaBase.home,'home',uaHome);
+quiz=uaWrap(uaBase.quiz,'quiz',uaQuiz);
+reviewView=uaWrap(uaBase.reviewView,'review',uaReview);
+results=uaWrap(uaBase.results,'results');
+guide=uaWrap(uaBase.guide,'guide');
+practice=uaWrap(uaBase.practice,'practice');
+pathView=uaWrap(uaBase.pathView,'path');
+lessonView=uaWrap(uaBase.lessonView,'lesson',uaLesson);
+sources=uaWrap(uaBase.sources,'sources');
+// The third step of the introduction names the pause button; in this UI that is the cross on the top left.
+onboarding=uaWrap(function(){const step=INTRO_STEPS[2];if(step?.text.includes('„Pause / Übersicht“'))step.text='Das Kreuz oben links pausiert die Runde, „Fortsetzen“ holt sie zurück. Falsche Fragen kannst du gezielt wiederholen.';return uaBase.onboarding();},'intro');
+available=function(){uaBase.available();uaSetup();};
+activateCourse=function(id){const ok=uaBase.activateCourse(id);if(ok)try{localStorage.setItem(UA_LAST_KEY,id);}catch{}return ok;};
+// Another window hid or brought back a course: the stack follows.
+window.addEventListener('storage',event=>{if((event.key===UA_HIDDEN_KEY||event.key===null)&&view==='courses'&&!document.querySelector('.ua-overlay'))courseHub();});
+// Keyboard in a round and in the card deck: A to L pick an answer; Enter checks, uncovers or goes on when no button has the focus.
+document.addEventListener('keydown',event=>{
+ if(event.defaultPrevented||event.metaKey||event.ctrlKey||event.altKey||event.repeat||(view!=='quiz'&&view!=='review')||document.querySelector('.ua-overlay,[role="dialog"]'))return;
+ const target=event.target,typing=target?.closest?.('input:not([type="radio"]),textarea,select,[contenteditable]');
+ if(typing)return;
+ if(event.key==='Enter'){
+  if(target?.closest?.('button,summary,a'))return;
+  const button=[document.getElementById('check'),document.querySelector('[data-recall-reveal]'),view==='quiz'?document.getElementById('next'):null].find(el=>el&&!el.disabled&&el.offsetParent);
+  if(button){event.preventDefault();button.click();}
+  return;
+ }
+ const index=event.key.length===1?'abcdefghijkl'.indexOf(event.key.toLowerCase()):-1,option=index<0?null:app.querySelectorAll('input[name="answer"]')[index];
+ if(option&&!option.disabled){event.preventDefault();option.click();}
+});
 const COURSES=JSON.parse(document.getElementById('course-data').textContent).map(course=>({...course,questions:course.id==='controlling'?JSON.parse(document.getElementById('question-data').textContent):course.questions,puzzleItems:(course.modelPuzzles||[]).map(puzzleItem),deckItems:(course.deckCards||[]).map(puzzleItem)}));
 const app=document.getElementById('app');
 let activeCourse=null,QUESTIONS=[],TOPICS={},DOCS={},STORAGE='',VERSION='',byId={};
